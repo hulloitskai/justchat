@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  name      String
+  room      Room      @relation(fields: [roomId], references: [id])
+  roomId    String
+  messages  Message[]
+}
+
+model Room {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  name      String
+  handle    String    @unique
+  secret    String?
+  members   User[]
+  messages  Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  content   String
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  String
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    String
+}
+
+// model Post {
+//   authorId  String?
+//   content   String?
+//   id        String     @id @default(uuid())
+//   published Boolean @default(false)
+//   title     String
+//   author    User?   @relation(fields: [authorId], references: [id])
+// }
