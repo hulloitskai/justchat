@@ -38,10 +38,7 @@ class SendMessageInput {
 @Resolver(Message)
 export class MessageResolver {
   @FieldResolver(type => User)
-  async sender(
-    @Ctx() ctx: Context,
-    @Root() message: Message,
-  ): Promise<User | null> {
+  async sender(@Ctx() ctx: Context, @Root() message: Message): Promise<User> {
     return ctx.prisma.message
       .findUnique({
         where: {
@@ -49,14 +46,14 @@ export class MessageResolver {
         },
         rejectOnNotFound: true,
       })
-      .sender();
+      .sender() as Promise<User>;
   }
 
   @FieldResolver(type => Room)
   async room(
     @Ctx() ctx: Context,
     @Root() message: Message,
-  ): Promise<User | null> {
+  ): Promise<Room | null> {
     return ctx.prisma.message
       .findUnique({
         where: {
@@ -64,7 +61,7 @@ export class MessageResolver {
         },
         rejectOnNotFound: true,
       })
-      .room();
+      .room() as Promise<Room>;
   }
 
   @Query(returns => Message, { nullable: true })

@@ -81,7 +81,7 @@ export class RoomResolver {
     });
     if (!room) return null;
 
-    if (room.secret !== secret) {
+    if (room.secret !== null && room.secret !== secret) {
       throw new Error("not authorized");
     }
     return room;

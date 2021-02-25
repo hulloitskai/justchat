@@ -4,8 +4,8 @@
   "scripts": {
     "start": "npm run start:dev",
     "start:dev": "ts-node-dev --no-notify --respawn --transpile-only src/index.ts",
-    "generate": "prisma generate",
-    "migrate": "prisma db push --preview-feature",
+    "prisma-generate": "prisma generate",
+    "prisma-migrate": "prisma db push --preview-feature",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

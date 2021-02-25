@@ -28,6 +28,22 @@ class CreateUserInput {
 
   @Field(type => ID)
   roomId: string;
+
+  @Field(type => String, { nullable: true })
+  roomSecret: string | null;
+}
+
+@InputType()
+class IdentifyUserInput {
+  @Field(type => String)
+  @Length(3, 128)
+  name: string;
+
+  @Field(type => ID)
+  roomId: string;
+
+  @Field(type => String, { nullable: true })
+  roomSecret: string | null;
 }
 
 @Resolver(User)
@@ -40,7 +56,7 @@ export class UserResolver {
           id: user.id,
         },
       })
-      .room();
+      .room() as Promise<Room>;
   }
 
   @FieldResolver(type => [Message])
@@ -66,7 +82,16 @@ export class UserResolver {
     @Ctx() ctx: Context,
     @Arg("input") input: CreateUserInput,
   ): Promise<User> {
-    const { name, roomId } = input;
+    const { name, roomId, roomSecret } = input;
+
+    const room = await ctx.prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) {
+      throw new Error("Room not found.");
+    }
+    if (room.secret !== null && room.secret !== roomSecret) {
+      throw new Error("Not authorized.");
+    }
+
     return ctx.prisma.user.create({
       data: {
         name,
@@ -80,5 +105,48 @@ export class UserResolver {
         },
       },
     });
+  }
+
+  @Mutation(returns => User)
+  async identifyUser(
+    @Ctx() ctx: Context,
+    @Arg("input") input: IdentifyUserInput,
+  ): Promise<User> {
+    const { name, roomId, roomSecret } = input;
+
+    const room = await ctx.prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) {
+      throw new Error("Room not found.");
+    }
+    if (room.secret !== null && room.secret !== roomSecret) {
+      throw new Error("Not authorized.");
+    }
+
+    // Find existing user by name, or create a new one.
+    let user = await ctx.prisma.user.findUnique({
+      where: {
+        name_roomId: {
+          name,
+          roomId,
+        },
+      },
+    });
+    if (!user) {
+      user = await ctx.prisma.user.create({
+        data: {
+          name,
+          room: {
+            connect: {
+              id: roomId,
+            },
+          },
+          messages: {
+            create: [],
+          },
+        },
+      });
+    }
+
+    return user;
   }
 }

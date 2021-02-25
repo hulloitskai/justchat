@@ -1,0 +1,8 @@
+node_modules/
+package-lock.json
+yarn.lock
+dist/
+.next/
+/public/
+/schema.ts
+/schema.json

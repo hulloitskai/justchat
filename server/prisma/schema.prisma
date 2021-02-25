@@ -15,6 +15,8 @@ model User {
   room      Room      @relation(fields: [roomId], references: [id])
   roomId    String
   messages  Message[]
+
+  @@unique([name, roomId])
 }
 
 model Room {
