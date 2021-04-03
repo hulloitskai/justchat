@@ -82,7 +82,7 @@ export class MessageResolver {
     if (!room) {
       throw new Error("room not found");
     }
-    if (room.secret !== roomSecret) {
+    if (room.secret !== null && room.secret !== roomSecret) {
       throw new Error("not authorized");
     }
 

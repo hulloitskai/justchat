@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from "react";
+import React, { FC } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, gql } from "@apollo/client";
 
@@ -35,41 +35,34 @@ export const Identify: FC<IdentifyProps> = ({
   ...otherProps
 }) => {
   const toast = useToast({
-    status: "success",
     position: "bottom",
     isClosable: true,
   });
 
-  const [IdentifyUser, { loading: isLoading }] = useMutation<
+  const [identifyUser, { loading: isLoading }] = useMutation<
     IdentifyUserMutation,
     IdentifyUserMutationVariables
   >(IDENTIFY_USER_MUTATION, {
     onCompleted: ({ identifyUser: { id: userId } }) => onIdentify(userId),
     onError: error => {
       toast({
+        status: "error",
         title: "Failed to create user",
         description: error.toString(),
       });
     },
   });
 
-  useEffect(() => {
-    toast({
-      title: "did not fail to create user",
-      description: "lmaos",
-    });
-  }, []);
-
   const {
+    handleSubmit,
     register,
     errors,
-    handleSubmit,
     formState: { isValid },
   } = useForm<IdentifyFieldValues>({
     mode: "all",
   });
   const onSubmit = handleSubmit(({ name }) => {
-    IdentifyUser({
+    identifyUser({
       variables: {
         input: {
           roomId,
@@ -81,43 +74,41 @@ export const Identify: FC<IdentifyProps> = ({
   });
 
   return (
-    <Box {...otherProps}>
-      <VStack as="form" align="stretch">
-        <FormControl>
-          <FormLabel>Name</FormLabel>
-          <Input
-            ref={register({
-              required: true,
-              minLength: {
-                value: 3,
-                message: "Too short (minimum 3 characters).",
-              },
-              maxLength: {
-                value: 128,
-                message: "Too long.",
-              },
-            })}
-            name="name"
-            type="text"
-            placeholder="Ass Man"
-            isRequired
-            minLength={3}
-            maxLength={128}
-          />
-          {errors.name && (
-            <FormErrorMessage>{errors.name.message}</FormErrorMessage>
-          )}
-        </FormControl>
-        <Button
-          type="submit"
-          colorScheme="pink"
-          isLoading={isLoading}
-          isDisabled={!isValid}
-          onClick={onSubmit}
-        >
-          Next
-        </Button>
-      </VStack>
-    </Box>
+    <VStack as="form" align="stretch" {...otherProps}>
+      <FormControl isInvalid={!!errors.name}>
+        <FormLabel>Name</FormLabel>
+        <Input
+          ref={register({
+            required: true,
+            minLength: {
+              value: 3,
+              message: "Too short (minimum 3 characters).",
+            },
+            maxLength: {
+              value: 128,
+              message: "Too long.",
+            },
+          })}
+          name="name"
+          type="text"
+          placeholder="Ass Man"
+          isRequired
+          minLength={3}
+          maxLength={128}
+        />
+        {errors.name && (
+          <FormErrorMessage>{errors.name.message}</FormErrorMessage>
+        )}
+      </FormControl>
+      <Button
+        type="submit"
+        colorScheme="pink"
+        isLoading={isLoading}
+        isDisabled={!isValid}
+        onClick={onSubmit}
+      >
+        Next
+      </Button>
+    </VStack>
   );
 };

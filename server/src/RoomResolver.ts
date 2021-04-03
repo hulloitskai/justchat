@@ -28,12 +28,12 @@ class CreateRoomInput {
 
   @Field(type => String)
   @Length(3, 128)
-  @Matches(/[a-z0-9][a-z0-9\-]*[a-z0-9]/)
+  @Matches(/^[a-z0-9][a-z0-9\-]*[a-z0-9]$/)
   handle: string;
 
   @Field(type => String, { nullable: true })
   @Length(3, 32)
-  @Matches(/[a-zA-Z0-9]/)
+  @Matches(/^[a-zA-Z0-9]$/)
   secret: string | null;
 }
 
@@ -60,7 +60,7 @@ export class RoomResolver {
     @Arg("take", type => Int, { defaultValue: 50 }) take: number,
     @Arg("skip", type => Int, { defaultValue: 0 }) skip: number,
   ): Promise<Message[] | null> {
-    return ctx.prisma.message.findMany({
+    const messages = await ctx.prisma.message.findMany({
       where: { room: room },
       orderBy: {
         createdAt: "desc",
@@ -68,6 +68,7 @@ export class RoomResolver {
       take,
       skip,
     });
+    return messages.reverse();
   }
 
   @Query(returns => Room, { nullable: true })
