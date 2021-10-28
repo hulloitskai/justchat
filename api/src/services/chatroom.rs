@@ -15,16 +15,8 @@ use entities::Message;
 #[derive(Debug)]
 pub struct Chatroom {
     current_message: AsyncMutex<Option<Record<Message>>>,
-    sx: BroadcastSender<MessageEvent>,
-    rx: BroadcastReceiver<MessageEvent>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum MessageEvent {
-    Start { sender: Handle, ch: char },
-    End,
-    Append { ch: char },
-    Delete,
+    sx: BroadcastSender<Event>,
+    rx: BroadcastReceiver<Event>,
 }
 
 impl Chatroom {
@@ -49,67 +41,77 @@ impl Chatroom {
         self.current_message.lock().await.clone()
     }
 
-    pub async fn send(
+    pub async fn update(
         &self,
         ctx: &Context,
-        event: MessageEvent,
+        update: Update,
     ) -> Result<Option<Record<Message>>> {
+        let Update { sender_handle, key } = update;
         let mut current_message = self.current_message.lock().await;
 
-        use MessageEvent::*;
-        match event.clone() {
-            Start { sender, ch } => {
-                // Flush prev message
-                if let Some(mut message) = current_message.take() {
-                    message
-                        .save(ctx)
-                        .await
-                        .context("failed to save message")?;
-                }
-
-                // Set new message
-                let message = Message::builder()
-                    .sender(sender)
-                    .body(ch.to_string())
-                    .build();
-                let message = Record::new(message);
-                *current_message = Some(message)
-            }
-            End => {
-                // Flush prev message
-                if let Some(mut message) = current_message.take() {
-                    message
-                        .save(ctx)
-                        .await
-                        .context("failed to save message")?;
-                }
-
-                // Clear message
-                *current_message = None
-            }
-            Append { ch } => {
-                // Append to message
-                let message = match current_message.as_mut() {
-                    Some(message) => message,
-                    None => bail!("missing current message"),
+        // Update current message
+        if let Some(mut message) = current_message.take() {
+            if message.sender_handle == sender_handle {
+                *current_message = match key.as_str() {
+                    "Backspace" => {
+                        message.body.pop();
+                        Some(message)
+                    }
+                    "Enter" => {
+                        message
+                            .save(ctx)
+                            .await
+                            .context("failed to save message")?;
+                        None
+                    }
+                    ch if ch.len() == 1 => {
+                        message.body.push_str(ch);
+                        Some(message)
+                    }
+                    _ => bail!("invalid key"),
                 };
-                message.body.push(ch);
-            }
-            Delete => {
-                // Delete last char from message
-                let message = match current_message.as_mut() {
-                    Some(message) => message,
-                    None => bail!("missing current message"),
-                };
-                message.body.pop();
+
+                let event = Event::Key(key);
+                self.sx.send(event).context("failed to broadcast event")?;
+
+                return Ok(current_message.clone());
             }
         }
 
-        self.sx.send(event).context("failed to broadcast event")?;
+        // Start new message
+        *current_message = match key.as_str() {
+            "Backspace" | "Enter" => current_message.take(),
+            ch if ch.len() == 1 => {
+                let message = Record::new({
+                    Message::builder()
+                        .sender_handle(sender_handle)
+                        .body(key)
+                        .build()
+                });
+
+                let event = Event::Message(message.clone());
+                self.sx.send(event).context("failed to broadcast event")?;
+
+                Some(message)
+            }
+            _ => bail!("invalid key"),
+        };
         Ok(current_message.clone())
     }
 
-    pub fn subscribe(&self) -> BroadcastReceiver<MessageEvent> {
+    pub fn subscribe(&self) -> BroadcastReceiver<Event> {
         self.sx.subscribe()
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Event {
+    Message(Record<Message>),
+    Key(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Builder)]
+pub struct Update {
+    pub sender_handle: Handle,
+    pub key: String,
 }

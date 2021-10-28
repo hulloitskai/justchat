@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Object)]
 pub struct Message {
-    pub sender: Handle,
+    pub sender_handle: Handle,
     pub body: String,
 }
 

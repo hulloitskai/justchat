@@ -1,27 +1,18 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useState } from "react";
 import type { NextPage } from "next";
-import detect from "browser-detect";
 
-import { Container, Box, VStack } from "@chakra-ui/react";
+import { Container, VStack } from "@chakra-ui/react";
 import { Text } from "@chakra-ui/react";
-import { Input } from "@chakra-ui/react";
-import { Alert, AlertIcon, AlertDescription } from "@chakra-ui/react";
+import { Collapse } from "@chakra-ui/react";
 import { chakra } from "@chakra-ui/react";
 
 import { HandlePicker } from "components/handle";
 import { Chat } from "components/chat";
 
 const HomePage: NextPage = () => {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [handle, setHandle] = useState<string>();
-
-  const isMobile = useMemo(() => {
-    const browser = detect();
-    return browser.mobile;
-  }, []);
-
   return (
-    <Container py={8} h="100vh" minH={96}>
+    <Container py={8} h="100vh">
       <VStack align="stretch" spacing={3} h="full">
         <Text
           alignSelf="center"
@@ -31,9 +22,11 @@ const HomePage: NextPage = () => {
         >
           JUSTCHAT<chakra.span color="pink.600">_</chakra.span>
         </Text>
-        <HandlePicker onPick={setHandle} />
+        <Collapse in={!handle}>
+          <HandlePicker onPick={setHandle} />
+        </Collapse>
         <Chat handle={handle} flex={1} />
-        <Box pos="relative">
+        {/* <Box pos="relative">
           <Alert
             status={handle ? "info" : "warning"}
             rounded="md"
@@ -77,7 +70,7 @@ const HomePage: NextPage = () => {
             border="none"
             pointerEvents="none"
           />
-        </Box>
+        </Box> */}
       </VStack>
     </Container>
   );

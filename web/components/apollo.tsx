@@ -30,13 +30,15 @@ const typePolicies: TypePolicies = {
           incoming: Message[] = [],
           { readField },
         ) {
-          return uniqBy([...existing, ...incoming], item => {
+          const outgoing = uniqBy([...existing, ...incoming], item => {
             if ((item as Reference).__ref) {
               return readField<string>({ fieldName: "id", from: item });
             } else {
               return (item as Message).id;
             }
           });
+          console.log({ existing, incoming, outgoing });
+          return outgoing;
         },
       },
     },

@@ -1,6 +1,6 @@
 {
   "name": "justchat-web",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
@@ -22,7 +22,6 @@
     "@chakra-ui/theme-tools": "^1.2.2",
     "@emotion/react": "^11.5.0",
     "@emotion/styled": "^11.3.0",
-    "browser-detect": "^0.2.28",
     "deepmerge": "^4.2.2",
     "framer-motion": "^4.1.17",
     "graphql": "^15.6.1",

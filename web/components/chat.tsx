@@ -1,38 +1,31 @@
 import React, { FC, useEffect, useMemo, useRef, useState } from "react";
-import { first, isEmpty, orderBy } from "lodash";
+import { orderBy } from "lodash";
 import { DateTime } from "luxon";
 
-import { BoxProps, VStack, Box } from "@chakra-ui/react";
+import { BoxProps, VStack, HStack, Box, Center } from "@chakra-ui/react";
 import { Badge } from "@chakra-ui/react";
 import { Text } from "@chakra-ui/react";
-import { chakra } from "@chakra-ui/react";
+import { Collapse, ScaleFade } from "@chakra-ui/react";
+import { useSafeLayoutEffect } from "@chakra-ui/react";
 import { useToast } from "components/toast";
+import { chakra } from "@chakra-ui/react";
 
-import { gql, useApolloClient } from "@apollo/client";
+import { ChatInput, ChatInputHandle } from "components/chat-input";
+
+import { gql } from "@apollo/client";
+import { useApolloClient } from "@apollo/client";
 import { formatApolloError } from "components/apollo";
 
-import { SendEventInput } from "apollo";
 import { ChatEventDocument, ChatEventSubscription } from "apollo";
-
-import {
-  ChatSendEventDocument,
-  ChatSendEventMutation,
-  ChatSendEventMutationVariables,
-} from "apollo";
-
+import { ChatMessagesQuery } from "apollo";
 import { useChatMessagesQuery } from "apollo";
 
 gql`
   query ChatMessages {
-    currentMessage {
-      id
-      body
-      sender
-    }
     messages(take: 10) {
       id
+      senderHandle
       body
-      sender
       timestamp
     }
   }
@@ -41,22 +34,19 @@ gql`
 gql`
   subscription ChatEvent {
     event {
-      start {
-        sender
-        ch
+      message {
+        id
+        senderHandle
+        body
       }
-      end
-      append {
-        ch
-      }
-      delete
+      key
     }
   }
 `;
 
 gql`
-  mutation ChatSendEvent($input: SendEventInput!) {
-    payload: sendEvent(input: $input) {
+  mutation ChatUpdate($input: UpdateInput!) {
+    payload: update(input: $input) {
       ok
     }
   }
@@ -69,19 +59,32 @@ export interface ChatProps extends BoxProps {
 export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
   const client = useApolloClient();
   const toast = useToast();
-  const bottomTabRef = useRef<HTMLDivElement>(null);
 
-  const [currentMessage, setCurrentMessage] = useState<MessageInfo | null>(
+  const handleRef = useRef<string | undefined | null>(handle);
+  useEffect(() => {
+    handleRef.current = handle;
+  }, [handle]);
+
+  const initialMessageRef = useRef<
+    ChatEventSubscription["event"]["message"] | null
+  >(null);
+  const [currentMessage, setCurrentMessage] = useState<CurrentMessage | null>(
     null,
   );
-  useEffect(() => {
-    setTimeout(() => {
-      bottomTabRef.current?.scrollIntoView();
-    }, 10);
-  }, [currentMessage]);
 
-  const { data, refetch } = useChatMessagesQuery({
-    fetchPolicy: "network-only",
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<ChatInputHandle>(null);
+  const inputInitialValue = useMemo(() => {
+    if (initialMessageRef.current) {
+      const { senderHandle, body } = initialMessageRef.current;
+      if (senderHandle === handle) {
+        return body;
+      }
+    }
+  }, [handle]);
+
+  const { data, fetchMore } = useChatMessagesQuery({
+    ssr: false,
     onError: error => {
       toast({
         status: "error",
@@ -90,7 +93,9 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
       });
     },
   });
-  const messages = useMemo(() => {
+
+  // Sort messages in ascending order by timestamp
+  const messages = useMemo<ChatMessagesQuery["messages"] | undefined>(() => {
     if (data?.messages) {
       return orderBy(
         data.messages,
@@ -100,160 +105,149 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
     }
   }, [data]);
 
-  useEffect(() => {
-    if (data?.currentMessage) {
-      const { sender, body } = data.currentMessage;
-      setCurrentMessage({ sender, body });
+  // Scroll to bottom when current message or data updates
+  useSafeLayoutEffect(() => {
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView();
+      }, 10);
     }
-    setTimeout(() => {
-      bottomTabRef.current?.scrollIntoView();
-    }, 10);
-  }, [data]);
+  }, [currentMessage, data]);
 
+  // Subscribe to events
   useEffect(() => {
-    if (handle) {
-      const listener = ({ key, metaKey }: KeyboardEvent) => {
-        if (metaKey) {
-          return;
-        }
-
-        const input: SendEventInput = {};
-        if (currentMessage?.sender === handle) {
-          if (key.length === 1) {
-            input.append = {
-              ch: key,
-            };
-          } else if (key === "Enter") {
-            input.end = true;
-          } else if (key === "Backspace") {
-            input.delete = true;
-          } else {
-            return;
-          }
-        } else {
-          if (key.length === 1) {
-            input.start = {
-              sender: handle,
-              ch: key,
-            };
-          } else {
-            return;
-          }
-        }
-
-        client
-          .mutate<ChatSendEventMutation, ChatSendEventMutationVariables>({
-            mutation: ChatSendEventDocument,
-            variables: { input },
-          })
-          .then(({ errors }) => {
-            if (!isEmpty(errors)) {
-              const error = first(errors)!;
-              toast({
-                status: "error",
-                title: "Failed to update message",
-                description: error.message,
-              });
+    const subscription = client
+      .subscribe<ChatEventSubscription>({
+        query: ChatEventDocument,
+      })
+      .subscribe(({ data }) => {
+        if (data?.event) {
+          const { message, key } = data.event;
+          if (message) {
+            if (!initialMessageRef.current) {
+              initialMessageRef.current = message;
             }
-          });
-      };
-      document.addEventListener("keydown", listener);
-      return () => document.removeEventListener("keydown", listener);
-    }
-  }, [handle, currentMessage]);
-
-  useEffect(
-    () => {
-      const subscription = client
-        .subscribe<ChatEventSubscription>({
-          query: ChatEventDocument,
-        })
-        .subscribe(({ data }) => {
-          if (data?.event) {
-            const { start, end, append, delete: deleteEvent } = data.event;
-            if (start) {
-              const { sender, ch } = start;
-              setCurrentMessage({ sender, body: ch });
-              refetch();
-            } else if (end) {
-              setCurrentMessage(null);
-              refetch();
-            } else if (append) {
-              const { ch } = append;
-              setCurrentMessage(message => {
-                if (!message) {
-                  throw new Error(
-                    "Attempted to append to nonexistent message.",
-                  );
-                }
-                const { body, ...other } = message;
-                return { body: body.concat(ch), ...other };
-              });
-            } else if (deleteEvent) {
-              setCurrentMessage(message => {
-                if (!message) {
-                  throw new Error(
-                    "Attempted to append to nonexistent message.",
-                  );
-                }
-                const { body, ...other } = message;
-                return { body: body.slice(0, -1), ...other };
-              });
+            const { senderHandle, body } = message;
+            if (inputRef.current && senderHandle !== handleRef.current) {
+              inputRef.current.reset();
+            }
+            setCurrentMessage({ senderHandle, body });
+            fetchMore({});
+          } else if (key) {
+            switch (key) {
+              case "Enter":
+                fetchMore({}).then(({ data }) => {
+                  if (data) {
+                    setCurrentMessage(null);
+                  }
+                });
+                break;
+              case "Backspace":
+                setCurrentMessage(message => {
+                  if (!message) {
+                    throw new Error(
+                      "Attempted to update a nonexistent message.",
+                    );
+                  }
+                  const { body, ...otherFields } = message;
+                  return { body: body.slice(0, -1), ...otherFields };
+                });
+                break;
+              default:
+                setCurrentMessage(message => {
+                  if (!message) {
+                    throw new Error(
+                      "Attempted to update a nonexistent message.",
+                    );
+                  }
+                  const { body, ...otherFields } = message;
+                  return { body: body.concat(key), ...otherFields };
+                });
             }
           }
-        });
-      return () => {
-        subscription.unsubscribe();
-      };
-    },
-    [], // eslint-disable-line react-hooks/exhaustive-deps
-  );
+        }
+      });
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
-    <VStack
-      align="stretch"
-      spacing={3}
-      overflowY="auto"
-      borderWidth={1}
-      borderColor="gray.200"
-      rounded="md"
-      p={3}
-      {...otherProps}
-    >
-      {messages?.map(({ id, sender, body }) => (
-        <MessageBubble
-          key={id}
-          {...{ sender, body }}
-          isActive={sender === handle}
-        />
-      ))}
-      {currentMessage && (
-        <MessageBubble
-          sender={currentMessage.sender}
-          body={currentMessage.body}
-          isActive={currentMessage.sender === handle}
-          showMarker
-        />
-      )}
-      <Box ref={bottomTabRef} />
+    <VStack align="stretch" minH={0} {...otherProps}>
+      <VStack
+        align="stretch"
+        spacing={0}
+        flex={1}
+        borderWidth={1}
+        borderColor="gray.200"
+        rounded="md"
+        overflow="hidden"
+      >
+        <Collapse in={!!handle}>
+          <Center w="full" bg="pink.600" py={0.5} boxShadow="md">
+            <HStack spacing={0} color="pink.100">
+              <Text fontSize="xs" opacity={0.85}>
+                CHATTING AS
+              </Text>
+              <Badge color="inherit" bg="transparent">
+                {handle}
+              </Badge>
+            </HStack>
+          </Center>
+        </Collapse>
+        <VStack
+          align="stretch"
+          spacing={3}
+          flex={1}
+          flexShrink={1}
+          overflowY="auto"
+          p={3}
+        >
+          {messages?.map(({ id, senderHandle, body }) => (
+            <ChatMessage
+              key={id}
+              isActive={senderHandle === handle}
+              {...{ senderHandle, body }}
+            />
+          ))}
+          {currentMessage && (
+            <ChatMessage
+              senderHandle={currentMessage.senderHandle}
+              body={currentMessage.body}
+              isActive={currentMessage.senderHandle === handle}
+              showMarker
+            />
+          )}
+          <Box ref={bottomRef} />
+        </VStack>
+      </VStack>
+      <ScaleFade in={!!handle}>
+        {!!handle && (
+          <ChatInput
+            ref={inputRef}
+            handle={handle}
+            initialValue={inputInitialValue}
+          />
+        )}
+      </ScaleFade>
     </VStack>
   );
 };
 
-type MessageInfo = {
-  sender: string;
+type CurrentMessage = {
+  senderHandle: string;
   body: string;
 };
 
-interface MessageBubbleProps extends BoxProps {
-  sender: string;
+interface ChatMessageProps extends BoxProps {
+  senderHandle: string;
   body: string;
   isActive?: boolean;
   showMarker?: boolean;
 }
 
-const MessageBubble: FC<MessageBubbleProps> = ({
-  sender,
+const ChatMessage: FC<ChatMessageProps> = ({
+  senderHandle,
   body,
   isActive,
   showMarker,
@@ -266,7 +260,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({
         bg={isActive ? "pink.600" : "gray.600"}
         color="white"
       >
-        {sender}
+        {senderHandle}
       </Badge>
       <Text color="gray.800" fontSize="sm">
         {body || <>&nbsp;</>}

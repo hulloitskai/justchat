@@ -1,8 +1,10 @@
+use tokio_stream::once as stream_once;
 use tokio_stream::wrappers::BroadcastStream;
 
 use super::*;
 
-use services::chatroom::MessageEvent;
+use services::chatroom::Event as ChatroomEvent;
+use services::chatroom::Update as ChatroomUpdate;
 
 #[derive(Debug, Clone, From)]
 pub(super) struct MessageObject {
@@ -19,8 +21,8 @@ impl MessageObject {
         self.record.created_at().into()
     }
 
-    async fn sender(&self) -> &str {
-        &self.record.sender.as_str()
+    async fn sender_handle(&self) -> &str {
+        &self.record.sender_handle.as_str()
     }
 
     async fn body(&self) -> &str {
@@ -28,58 +30,23 @@ impl MessageObject {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Enum)]
-#[graphql(name = "MessageEventType")]
-pub(super) enum MessageEventTypeEnum {
-    Start,
-    End,
-    Append,
-    Delete,
-}
-
-#[derive(Debug, Clone, SimpleObject)]
-#[graphql(name = "MessageStartEvent")]
-pub(super) struct MessageStartEventObject {
-    pub sender: String,
-    pub ch: char,
-}
-
-#[derive(Debug, Clone, SimpleObject)]
-#[graphql(name = "MessageAppendEvent")]
-pub(super) struct MessageAppendEventObject {
-    pub ch: char,
-}
-
 #[derive(Debug, Clone, Default, SimpleObject)]
-#[graphql(name = "MessageEvent")]
-pub(super) struct MessageEventObject {
-    pub start: Option<MessageStartEventObject>,
-    pub end: bool,
-    pub append: Option<MessageAppendEventObject>,
-    pub delete: bool,
+#[graphql(name = "Event")]
+pub(super) struct EventObject {
+    pub message: Option<MessageObject>,
+    pub key: Option<String>,
 }
 
-impl From<MessageEvent> for MessageEventObject {
-    fn from(event: MessageEvent) -> Self {
-        use MessageEvent::*;
+impl From<ChatroomEvent> for EventObject {
+    fn from(event: ChatroomEvent) -> Self {
+        use ChatroomEvent::*;
         match event {
-            Start { sender, ch } => MessageEventObject {
-                start: Some(MessageStartEventObject {
-                    sender: sender.to_string(),
-                    ch,
-                }),
+            Message(message) => EventObject {
+                message: Some(MessageObject::from(message)),
                 ..default()
             },
-            End => MessageEventObject {
-                end: true,
-                ..default()
-            },
-            Append { ch } => MessageEventObject {
-                append: Some(MessageAppendEventObject { ch }),
-                ..default()
-            },
-            Delete => MessageEventObject {
-                delete: true,
+            Key(key) => EventObject {
+                key: Some(key),
                 ..default()
             },
         }
@@ -164,18 +131,27 @@ impl MessageSubscription {
     async fn event(
         &self,
         ctx: &Context<'_>,
-    ) -> impl Stream<Item = FieldResult<MessageEventObject>> {
+    ) -> impl Stream<Item = FieldResult<EventObject>> {
         let services = ctx.services();
-        let stream = {
-            let rx = services.chatroom().subscribe();
-            BroadcastStream::new(rx)
+        let chatroom = services.chatroom();
+        let initial = {
+            let message = chatroom.current_message().await;
+            let event = EventObject {
+                message: message.map(Into::into),
+                ..default()
+            };
+            stream_once(FieldResult::Ok(event))
         };
-        stream.map(move |result| {
-            result.map(MessageEventObject::from).map_err(|error| {
-                let message = error.to_string();
-                FieldError::new(message)
+        let updates = {
+            let rx = chatroom.subscribe();
+            BroadcastStream::new(rx).map(move |result| {
+                result.map(EventObject::from).map_err(|error| {
+                    let message = error.to_string();
+                    FieldError::new(message)
+                })
             })
-        })
+        };
+        initial.chain(updates)
     }
 }
 
@@ -184,78 +160,44 @@ pub(super) struct MessageMutation;
 
 #[Object]
 impl MessageMutation {
-    async fn send_event(
+    async fn update(
         &self,
         ctx: &Context<'_>,
-        input: SendEventInput,
-    ) -> FieldResult<SendEventPayload> {
-        let SendEventInput {
-            start,
-            end,
-            append,
-            delete,
-        } = input;
-
-        let event = {
-            use MessageEvent::*;
-            if let Some(MessageStartEventInput { sender, ch }) = start {
-                let sender: Handle = sender
-                    .parse()
-                    .context("failed to parse sender handle")
-                    .into_field_result()?;
-                Start { sender, ch }
-            } else if end.unwrap_or_default() {
-                End
-            } else if let Some(MessageAppendEventInput { ch }) = append {
-                Append { ch }
-            } else if delete.unwrap_or_default() {
-                Delete
-            } else {
-                panic!("invalid event");
-            }
-        };
-
-        let services = ctx.services();
-        let ctx = EntityContext::new(services.clone());
-        let chatroom = services.chatroom();
-
-        let message = chatroom
-            .send(&ctx, event.clone())
-            .await
-            .context("failed to send message")
+        input: UpdateInput,
+    ) -> FieldResult<UpdatePayload> {
+        let UpdateInput { sender_handle, key } = input;
+        let sender_handle: Handle = sender_handle
+            .parse()
+            .context("failed to parse sender handle")
             .into_field_result()?;
 
-        let payload = SendEventPayload {
+        let services = ctx.services();
+        let chatroom = services.chatroom();
+        let ctx = EntityContext::new(services.clone());
+
+        let update = ChatroomUpdate::builder()
+            .sender_handle(sender_handle)
+            .key(key)
+            .build();
+        let current_message =
+            chatroom.update(&ctx, update).await.into_field_result()?;
+
+        let payload = UpdatePayload {
             ok: true,
-            event: event.into(),
-            message: message.map(Into::into),
+            current_message: current_message.map(Into::into),
         };
         Ok(payload)
     }
 }
 
 #[derive(Debug, Clone, InputObject)]
-pub(super) struct SendEventInput {
-    pub start: Option<MessageStartEventInput>,
-    pub end: Option<bool>,
-    pub append: Option<MessageAppendEventInput>,
-    pub delete: Option<bool>,
-}
-
-#[derive(Debug, Clone, InputObject)]
-pub(super) struct MessageStartEventInput {
-    pub sender: String,
-    pub ch: char,
-}
-
-#[derive(Debug, Clone, InputObject)]
-pub(super) struct MessageAppendEventInput {
-    pub ch: char,
+pub(super) struct UpdateInput {
+    pub sender_handle: String,
+    pub key: String,
 }
 
 #[derive(Debug, Clone, SimpleObject)]
-pub(super) struct SendEventPayload {
+pub(super) struct UpdatePayload {
+    pub current_message: Option<MessageObject>,
     pub ok: bool,
-    pub event: MessageEventObject,
-    pub message: Option<MessageObject>,
 }

@@ -35,12 +35,8 @@ export const HandlePicker: FC<HandlePickerProps> = ({
   });
   return (
     <Box as="form" onSubmit={onSubmit} {...otherProps}>
-      <FormControl
-        isRequired
-        isReadOnly={isSubmitted}
-        isInvalid={!!errors.handle}
-      >
-        {!isSubmitted && <FormLabel>Handle</FormLabel>}
+      <FormControl isRequired isInvalid={!!errors.handle}>
+        <FormLabel>Handle</FormLabel>
         <InputGroup>
           <Input
             placeholder="jeff-bezos"
@@ -50,11 +46,6 @@ export const HandlePicker: FC<HandlePickerProps> = ({
             pattern={HANDLE_REGEX}
             minLength={2}
             maxLength={32}
-            pr={isValid ? "5.5rem" : undefined}
-            bg={isSubmitted ? "pink.600" : undefined}
-            color={isSubmitted ? "white" : undefined}
-            fontWeight={isSubmitted ? "bold" : undefined}
-            borderWidth={isSubmitted ? 0 : undefined}
             {...register("handle", {
               required: true,
               pattern: {
@@ -75,7 +66,7 @@ export const HandlePicker: FC<HandlePickerProps> = ({
             w="5.5rem"
             pointerEvents={isValid ? undefined : "none"}
           >
-            <ScaleFade in={!isSubmitted && isValid} unmountOnExit>
+            <ScaleFade in={isValid} unmountOnExit>
               <Button
                 type="submit"
                 size="sm"
@@ -88,14 +79,12 @@ export const HandlePicker: FC<HandlePickerProps> = ({
             </ScaleFade>
           </InputRightElement>
         </InputGroup>
-        {!isSubmitted && !!errors.handle?.message && (
+        {!!errors.handle?.message && (
           <FormErrorMessage>{errors.handle.message}</FormErrorMessage>
         )}
-        {!isSubmitted && (
-          <FormHelperText>
-            Can only contain lowercase letters, numbers, and dashes.
-          </FormHelperText>
-        )}
+        <FormHelperText>
+          Can only contain lowercase letters, numbers, and dashes.
+        </FormHelperText>
       </FormControl>
     </Box>
   );
