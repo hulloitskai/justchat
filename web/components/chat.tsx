@@ -6,15 +6,12 @@ import { BoxProps, VStack, Box } from "@chakra-ui/react";
 import { Badge } from "@chakra-ui/react";
 import { Text } from "@chakra-ui/react";
 import { chakra } from "@chakra-ui/react";
-
 import { useToast } from "components/toast";
 
 import { gql, useApolloClient } from "@apollo/client";
+import { formatApolloError } from "components/apollo";
 
 import { SendEventInput } from "apollo";
-
-import { useChatMessagesQuery } from "apollo";
-
 import { ChatEventDocument, ChatEventSubscription } from "apollo";
 
 import {
@@ -22,6 +19,8 @@ import {
   ChatSendEventMutation,
   ChatSendEventMutationVariables,
 } from "apollo";
+
+import { useChatMessagesQuery } from "apollo";
 
 gql`
   query ChatMessages {
@@ -83,11 +82,11 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
 
   const { data, refetch } = useChatMessagesQuery({
     fetchPolicy: "network-only",
-    onError: ({ message }) => {
+    onError: error => {
       toast({
         status: "error",
         title: "Failed to load messages",
-        description: message,
+        description: formatApolloError(error),
       });
     },
   });

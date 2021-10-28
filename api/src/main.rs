@@ -216,7 +216,6 @@ async fn main() -> Result<()> {
                 cors().allow_method(Method::POST).allow_header(CONTENT_TYPE);
             let cors = match env_var("JUSTCHAT_API_CORS_ALLOW_ORIGIN") {
                 Ok(origin) => {
-                    println!("origin from env: {}", &origin);
                     if origin == "*" {
                         cors.allow_any_origin()
                     } else {

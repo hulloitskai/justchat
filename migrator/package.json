@@ -1,6 +1,6 @@
 {
-  "name": "template-migrator",
-  "version": "0.1.1",
+  "name": "justchat-migrator",
+  "version": "0.1.2",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {

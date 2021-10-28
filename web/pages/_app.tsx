@@ -20,7 +20,7 @@ const App = ({ Component, pageProps }: NextAppProps): ReactElement => {
     <>
       <>
         <MetaTitle />
-        {/* <MetaDescription description="This is a template description." /> */}
+        <MetaDescription description="An honest, personal, non-transactional text chat experience." />
         <MetaType type="website" />
       </>
       <ChakraProvider cookies={cookieHeader}>

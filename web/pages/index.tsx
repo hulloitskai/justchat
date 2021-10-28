@@ -13,7 +13,7 @@ const HomePage: NextPage = () => {
   const [handle, setHandle] = useState<string>();
   return (
     <Container py={8}>
-      <VStack align="stretch" spacing={4}>
+      <VStack align="stretch" spacing={3}>
         <Text
           alignSelf="center"
           fontSize="lg"
@@ -23,15 +23,15 @@ const HomePage: NextPage = () => {
           JUSTCHAT<chakra.span color="pink.600">_</chakra.span>
         </Text>
         <HandlePicker onPick={setHandle} />
-        {!handle && (
-          <Alert status="warning" variant="subtle" rounded="md" px={3} py={2}>
-            <AlertIcon />
-            <AlertDescription fontSize="sm">
-              You are anonymous; this conversation is read-only.
-            </AlertDescription>
-          </Alert>
-        )}
         <Chat handle={handle} h={96} />
+        <Alert status={handle ? "info" : "warning"} rounded="md" px={3} py={2}>
+          <AlertIcon />
+          <AlertDescription fontSize="sm">
+            {handle
+              ? "Start typing to chat!"
+              : "You are anonymous; this conversation is read-only."}
+          </AlertDescription>
+        </Alert>
       </VStack>
     </Container>
   );
