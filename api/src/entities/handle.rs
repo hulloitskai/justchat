@@ -1,7 +1,18 @@
 use super::*;
 
 /// A `Handle` is a URL-safe identifier.
-#[derive(Debug, Display, Clone, Hash, Into, Serialize, Deserialize, AsRef)]
+#[derive(
+    Debug,
+    Display,
+    Clone,
+    Hash,
+    Into,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    AsRef,
+)]
 pub struct Handle(String);
 
 impl Handle {

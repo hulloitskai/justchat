@@ -1,39 +1,94 @@
 import { FC, ReactNode, useCallback, useContext, useMemo } from "react";
-import { isEqual } from "lodash";
+import { isEqual, uniqBy } from "lodash";
 import merge from "deepmerge";
 
 import { useToast } from "components/toast";
 
 import { ApolloClient as Client } from "@apollo/client";
+import { ApolloLink } from "@apollo/client";
 import { ApolloProvider as Provider } from "@apollo/client";
-import { ApolloError } from "@apollo/client";
-import { ServerError } from "@apollo/client";
+import { ApolloError, ServerError } from "@apollo/client";
 import { getApolloContext } from "@apollo/client";
+import { Reference } from "@apollo/client";
 
-import { HttpLink } from "@apollo/client";
+import { HttpLink, split } from "@apollo/client";
+import { WebSocketLink } from "@apollo/client/link/ws";
+import { getMainDefinition } from "@apollo/client/utilities";
 import { InMemoryCache, NormalizedCacheObject } from "@apollo/client";
 import { TypedTypePolicies as TypePolicies } from "apollo/helpers";
 
-import { JUSTCHAT_API_URL } from "consts";
+import { Message } from "apollo";
+
+import { JUSTCHAT_API_PUBLIC_URL, JUSTCHAT_API_URL } from "consts";
 
 const typePolicies: TypePolicies = {
-  KnowledgeEntryLinks: { keyFields: false },
-  MusicInfo: { keyFields: [] },
-  MusicTrack: { keyFields: ["spotifyId"] },
-  MusicAlbum: { keyFields: ["spotifyId"] },
-  MusicArtist: { keyFields: ["spotifyId"] },
-  Lyrics: { keyFields: false },
-  LyricLine: { keyFields: false },
+  Query: {
+    fields: {
+      messages: {
+        merge(
+          existing: Reference[] = [],
+          incoming: Message[] = [],
+          { readField },
+        ) {
+          return uniqBy([...existing, ...incoming], item => {
+            if ((item as Reference).__ref) {
+              return readField<string>({ fieldName: "id", from: item });
+            } else {
+              return (item as Message).id;
+            }
+          });
+        },
+      },
+    },
+  },
+};
+
+const createLink = (): ApolloLink => {
+  const httpLink = new HttpLink({
+    uri:
+      typeof window !== "undefined"
+        ? `${JUSTCHAT_API_PUBLIC_URL}/graphql`
+        : `${JUSTCHAT_API_URL}/graphql`,
+  });
+  if (typeof window === "undefined") {
+    return httpLink;
+  }
+
+  const wsLink = new WebSocketLink({
+    uri: (() => {
+      const { protocol, host, pathname } = new URL(JUSTCHAT_API_PUBLIC_URL);
+      const path = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+      switch (protocol) {
+        case "http:":
+          return `ws://${host}${path}/graphql`;
+        case "https:":
+          return `wss://${host}${path}/graphql`;
+        default:
+          throw new Error("Unknown protocol.");
+      }
+    })(),
+    options: {
+      reconnect: true,
+    },
+  });
+
+  return split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return (
+        definition.kind === "OperationDefinition" &&
+        definition.operation === "subscription"
+      );
+    },
+    wsLink,
+    httpLink,
+  );
 };
 
 const createApolloClient = (): Client<NormalizedCacheObject> => {
-  const ssrMode = typeof window === "undefined";
-  const httpLink = new HttpLink({
-    uri: ssrMode ? `${JUSTCHAT_API_URL}/graphql` : "/api/graphql",
-  });
   return new Client({
-    ssrMode,
-    link: httpLink,
+    ssrMode: typeof window === "undefined",
+    link: createLink(),
     cache: new InMemoryCache({
       typePolicies,
     }),

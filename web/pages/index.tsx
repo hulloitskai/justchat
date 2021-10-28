@@ -1,35 +1,39 @@
-import React, { useMemo } from "react";
+import React, { useState } from "react";
 import type { NextPage } from "next";
 
-import { gql } from "@apollo/client";
-import { useHomePageQuery } from "apollo";
-
-import { VStack } from "@chakra-ui/react";
-import { Skeleton } from "@chakra-ui/react";
+import { Container, VStack } from "@chakra-ui/react";
 import { Text } from "@chakra-ui/react";
+import { Alert, AlertIcon, AlertDescription } from "@chakra-ui/react";
 import { chakra } from "@chakra-ui/react";
 
-gql`
-  query HomePage {
-    buildInfo {
-      timestamp
-      version
-    }
-  }
-`;
+import { HandlePicker } from "components/handle";
+import { Chat } from "components/chat";
 
 const HomePage: NextPage = () => {
-  const { data } = useHomePageQuery();
-  const dataText = useMemo(() => JSON.stringify(data, undefined, 2), [data]);
+  const [handle, setHandle] = useState<string>();
   return (
-    <VStack spacing={4} my={10}>
-      <Text fontSize="3xl" fontWeight="extrabold">
-        JUSTCHAT
-      </Text>
-      <Skeleton isLoaded={!!data} minH={32}>
-        <chakra.pre>{dataText}</chakra.pre>
-      </Skeleton>
-    </VStack>
+    <Container py={8}>
+      <VStack align="stretch" spacing={4}>
+        <Text
+          alignSelf="center"
+          fontSize="lg"
+          fontWeight="extrabold"
+          letterSpacing={3}
+        >
+          JUSTCHAT<chakra.span color="pink.600">_</chakra.span>
+        </Text>
+        <HandlePicker onPick={setHandle} />
+        {!handle && (
+          <Alert status="warning" variant="subtle" rounded="md" px={3} py={2}>
+            <AlertIcon />
+            <AlertDescription fontSize="sm">
+              You are anonymous; this conversation is read-only.
+            </AlertDescription>
+          </Alert>
+        )}
+        <Chat handle={handle} h={96} />
+      </VStack>
+    </Container>
   );
 };
 

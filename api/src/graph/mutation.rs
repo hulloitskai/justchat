@@ -1,15 +1,15 @@
 use super::*;
 
 #[derive(Debug, Clone, Copy, MergedObject)]
-pub struct Query(BuildQuery, MessageQuery);
+pub struct Mutation(MessageMutation);
 
-impl Query {
+impl Mutation {
     pub fn new() -> Self {
-        Self(BuildQuery, MessageQuery)
+        Self(MessageMutation)
     }
 }
 
-impl Default for Query {
+impl Default for Mutation {
     fn default() -> Self {
         Self::new()
     }

@@ -1,36 +1,17 @@
-const { JUSTCHAT_API_URL } = process.env;
+const { JUSTCHAT_API_URL, JUSTCHAT_API_PUBLIC_URL } = process.env;
 const { AUTH0_DOMAIN, AUTH0_CLIENT_ID } = process.env;
 const { GCP_API_KEY } = process.env;
 
-module.exports = {
+/**
+ * @type {import('next').NextConfig}
+ **/
+const config = {
   productionBrowserSourceMaps: true,
-  rewrites: async () => {
-    if (!JUSTCHAT_API_URL) {
-      console.info("Missing API server URL; proxying is disabled.");
-      return [];
-    }
-    return [
-      {
-        source: "/api/:slug*",
-        destination: `${JUSTCHAT_API_URL}/:slug*`,
-      },
-    ];
-  },
-  headers: async () => [
-    {
-      source: "/fonts/:font",
-      headers: [
-        {
-          key: "Access-Control-Allow-Origin",
-          value: "*",
-        },
-      ],
-    },
-  ],
   publicRuntimeConfig: {
     AUTH0_DOMAIN,
     AUTH0_CLIENT_ID,
     GCP_API_KEY,
+    JUSTCHAT_API_PUBLIC_URL,
   },
   serverRuntimeConfig: {
     AUTH0_DOMAIN,
@@ -39,3 +20,5 @@ module.exports = {
     JUSTCHAT_API_URL,
   },
 };
+
+module.exports = config;

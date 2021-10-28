@@ -7,7 +7,7 @@ export interface MetaTitleProps {
 }
 
 export const MetaTitle: FC<MetaTitleProps> = ({ page, site }) => {
-  const siteName = site ?? "JUSTCHAT";
+  const siteName = site ?? "JUSTCHAT_";
   const pageTitle = Array.isArray(page) ? page.join(" | ") : page;
   return (
     <Head>

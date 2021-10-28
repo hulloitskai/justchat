@@ -1,3 +1,7 @@
+pub mod chatroom;
+
+use chatroom::Chatroom;
+
 use super::*;
 
 use entrust::EntityServices;
@@ -15,6 +19,7 @@ struct ServicesInner {
     database: Database,
     database_client: DatabaseClient,
     settings: Settings,
+    chatroom: Chatroom,
 }
 
 impl ServicesInner {
@@ -28,6 +33,10 @@ impl ServicesInner {
 
     fn settings(&self) -> &Settings {
         &self.settings
+    }
+
+    fn chatroom(&self) -> &Chatroom {
+        &self.chatroom
     }
 }
 
@@ -46,6 +55,7 @@ impl Services {
             database,
             database_client,
             settings,
+            chatroom: default(),
         };
         Services(inner.into())
     }
@@ -55,6 +65,7 @@ impl Services {
             pub fn database(&self) -> &Database;
             pub fn database_client(&self) -> &DatabaseClient;
             pub fn settings(&self) -> &Settings;
+            pub fn chatroom(&self) -> &Chatroom;
         }
     }
 }

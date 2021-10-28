@@ -21,6 +21,7 @@ use derives::{AsRef, Deref};
 use derives::{From, Into};
 
 use tokio::sync::Mutex as AsyncMutex;
+use tokio::sync::MutexGuard as AsyncMutexGuard;
 use tokio::sync::RwLock as AsyncRwLock;
 use tokio::sync::Semaphore;
 use tokio::task::spawn_blocking;
@@ -36,12 +37,12 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use futures::Future;
-use futures_util::future::try_join_all;
-use futures_util::stream::TryStreamExt;
+use futures::{Future, Stream, TryFuture, TryStream};
+use futures_util::future::{join_all, try_join_all};
+use futures_util::stream::{StreamExt, TryStreamExt};
 
-use anyhow::ensure;
 use anyhow::Context as AnyhowContext;
+use anyhow::{bail, ensure};
 use anyhow::{Error, Result};
 
 use tracing::{debug, trace};

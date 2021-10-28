@@ -2,20 +2,23 @@ use justchat_api::entities::BuildInfo;
 use justchat_api::env::load as load_env;
 use justchat_api::env::var as env_var;
 use justchat_api::env::var_or as env_var_or;
-use justchat_api::graph::Query;
+use justchat_api::graph::{Mutation, Query, Subscription};
 use justchat_api::services::Config as ServicesConfig;
 use justchat_api::services::{Services, Settings};
 
 use std::borrow::Cow;
 use std::convert::Infallible;
+use std::env::VarError as EnvVarError;
 use std::net::SocketAddr;
 
 use anyhow::Context as AnyhowContext;
 use anyhow::Result;
 
 use http::header::CONTENT_TYPE;
+use http::method::Method;
 use http::{Response, StatusCode};
 
+use warp::cors;
 use warp::path::end as path_end;
 use warp::reject::custom as rejection;
 use warp::reject::Reject;
@@ -24,19 +27,20 @@ use warp::reply::with_status as reply_with_status;
 use warp::{get, head, path, serve};
 use warp::{Filter, Rejection, Reply};
 
-use warp_graphql::graphql as warp_graphql;
-use warp_graphql::graphql_subscription as warp_graphql_subscription;
-use warp_graphql::BadRequest as BadWarpGraphQLRequest;
-use warp_graphql::Response as WarpGraphQLResponse;
-
 use graphql::extensions::apollo_persisted_queries as graphql_apq;
 use graphql::http::playground_source as graphql_playground_source;
 use graphql::http::GraphQLPlaygroundConfig;
 use graphql::Request as GraphQLRequest;
 use graphql::Response as GraphQLResponse;
-use graphql::{EmptyMutation, EmptySubscription, Schema};
+use graphql::Schema;
+
 use graphql_apq::ApolloPersistedQueries as GraphQLAPQExtension;
 use graphql_apq::LruCacheStorage as GraphQLAPQStorage;
+
+use graphql_warp::graphql as warp_graphql;
+use graphql_warp::graphql_subscription as warp_graphql_subscription;
+use graphql_warp::BadRequest as WarpGraphQLBadRequest;
+use graphql_warp::Response as WarpGraphQLResponse;
 
 use mongodb::options::ClientOptions as MongoClientOptions;
 use mongodb::Client as MongoClient;
@@ -52,11 +56,11 @@ use tokio::main as tokio;
 
 #[tokio]
 async fn main() -> Result<()> {
-    // Load environment variables and initialize tracer.
+    // Load environment variables and initialize tracer
     load_env().context("failed to load environment variables")?;
     init_tracer();
 
-    // Read build info.
+    // Read build info
     let build = {
         let timestamp = DateTime::<FixedOffset>::parse_from_rfc3339(env!(
             "BUILD_TIMESTAMP"
@@ -66,7 +70,7 @@ async fn main() -> Result<()> {
         BuildInfo { timestamp, version }
     };
 
-    // Connect to database.
+    // Connect to database
     let database_client = {
         let uri = env_var_or("MONGO_URI", "mongodb://localhost:27017")
             .context("failed to read environment variable MONGO_URI")?;
@@ -96,7 +100,7 @@ async fn main() -> Result<()> {
 
     info!(target: "justchat-api", "initializing services");
 
-    // Build settings.
+    // Build settings
     let settings = Settings::builder()
         .web_public_url({
             let url = env_var("JUSTCHAT_WEB_PUBLIC_URL").context(
@@ -114,7 +118,7 @@ async fn main() -> Result<()> {
         })
         .build();
 
-    // Build services.
+    // Build services
     let services = {
         let config = ServicesConfig::builder()
             .database_client(database_client)
@@ -124,11 +128,11 @@ async fn main() -> Result<()> {
         Services::new(config)
     };
 
-    // Build GraphQL schema.
+    // Build GraphQL schema
     let graphql_schema = {
         let query = Query::new();
-        let mutation = EmptyMutation;
-        let subscription = EmptySubscription;
+        let mutation = Mutation::new();
+        let subscription = Subscription::new();
         Schema::build(query, mutation, subscription)
             .extension({
                 let storage = GraphQLAPQStorage::new(1024);
@@ -139,7 +143,7 @@ async fn main() -> Result<()> {
             .finish()
     };
 
-    // Build GraphQL filter.
+    // Build GraphQL filter
     let graphql_filter = {
         let graphql = {
             warp_graphql(graphql_schema.clone()).untuple_one().and_then(
@@ -157,7 +161,7 @@ async fn main() -> Result<()> {
             .and(graphql_subscription.or(graphql))
     };
 
-    // Build GraphQL playground filter.
+    // Build GraphQL playground filter
     let graphql_playground_filter = (get().or(head()))
         .map({
             let services = services.clone();
@@ -204,9 +208,31 @@ async fn main() -> Result<()> {
                 .body(source)
         });
 
-    // Build root filter.
+    // Build root filter
     let filter = (path_end().and(graphql_playground_filter))
         .or(graphql_filter)
+        .with({
+            let cors =
+                cors().allow_method(Method::POST).allow_header(CONTENT_TYPE);
+            let cors = match env_var("JUSTCHAT_API_CORS_ALLOW_ORIGIN") {
+                Ok(origin) => {
+                    println!("origin from env: {}", &origin);
+                    if origin == "*" {
+                        cors.allow_any_origin()
+                    } else {
+                        cors.allow_origins(origin.split(','))
+                    }
+                }
+                Err(EnvVarError::NotPresent) => cors,
+                Err(error) => {
+                    return Err(error).context(
+                        "invalid environment variable \
+                        JUSTCHAT_API_CORS_ALLOW_ORIGIN",
+                    )
+                }
+            };
+            cors
+        })
         .recover(recover);
 
     let host = env_var_or("JUSTCHAT_API_HOST", "0.0.0.0")
@@ -229,8 +255,8 @@ async fn recover(rejection: Rejection) -> Result<impl Reply, Infallible> {
     } else if let Some(error) = rejection.find::<ErrorRejection>() {
         let error = error.to_owned();
         (error, StatusCode::INTERNAL_SERVER_ERROR)
-    } else if let Some(error) = rejection.find::<BadWarpGraphQLRequest>() {
-        let BadWarpGraphQLRequest(error) = error;
+    } else if let Some(error) = rejection.find::<WarpGraphQLBadRequest>() {
+        let WarpGraphQLBadRequest(error) = error;
         let error = ErrorRejection::new(error.to_string());
         (error, StatusCode::BAD_REQUEST)
     } else if let Some(error) = rejection.find::<Error>() {
