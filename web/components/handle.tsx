@@ -44,6 +44,9 @@ export const HandlePicker: FC<HandlePickerProps> = ({
         <InputGroup>
           <Input
             placeholder="jeff-bezos"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
             pattern={HANDLE_REGEX}
             minLength={2}
             maxLength={32}
