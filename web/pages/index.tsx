@@ -12,8 +12,8 @@ import { Chat } from "components/chat";
 const HomePage: NextPage = () => {
   const [handle, setHandle] = useState<string>();
   return (
-    <Container py={8} h="100vh">
-      <VStack align="stretch" spacing={3} h="full">
+    <Container py={[3, 8]} h="100vh">
+      <VStack align="stretch" spacing={2} h="full">
         <Text
           alignSelf="center"
           fontSize="lg"
