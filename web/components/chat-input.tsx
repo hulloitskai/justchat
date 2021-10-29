@@ -35,7 +35,24 @@ export type ChatInputHandle = {
 export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
   ({ handle, initialValue, ...otherProps }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+      const inputEl = inputRef.current;
+      if (inputEl && initialValue) {
+        inputEl.value = initialValue;
+      }
+    }, []);
+
     const [isDisabled, setIsDisabled] = useState(false);
+    useEffect(() => {
+      if (!isDisabled) {
+        setTimeout(() => {
+          const inputEl = inputRef.current;
+          if (inputEl) {
+            inputEl.focus();
+          }
+        }, 10);
+      }
+    }, [isDisabled]);
 
     useImperativeHandle(ref, () => ({
       reset: () => {
@@ -47,13 +64,6 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
         setTimeout(() => setIsDisabled(false), 1000);
       },
     }));
-
-    useEffect(() => {
-      const inputEl = inputRef.current;
-      if (inputEl && initialValue) {
-        inputEl.value = initialValue;
-      }
-    }, []);
 
     const [runUpdateMutation, { loading: isLoading }] =
       useChatInputUpdateMutation();
