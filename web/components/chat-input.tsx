@@ -44,9 +44,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           inputEl.value = "";
         }
         setIsDisabled(true);
-        setTimeout(() => {
-          setIsDisabled(false);
-        }, 500);
+        setTimeout(() => setIsDisabled(false), 1000);
       },
     }));
 
@@ -66,6 +64,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           placeholder="Enter a message..."
           autoFocus
           autoCorrect="off"
+          autoComplete="off"
           autoCapitalize="off"
           isDisabled={isDisabled}
           onMouseDown={event => {
