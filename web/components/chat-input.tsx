@@ -39,8 +39,10 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
 
     useImperativeHandle(ref, () => ({
       reset: () => {
-        if (inputRef.current) {
-          inputRef.current.value = "";
+        const inputEl = inputRef.current;
+        if (inputEl) {
+          inputEl.blur();
+          inputEl.value = "";
         }
         setIsDisabled(true);
         setTimeout(() => {
@@ -50,8 +52,9 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
     }));
 
     useEffect(() => {
-      if (inputRef.current && initialValue) {
-        inputRef.current.value = initialValue;
+      const inputEl = inputRef.current;
+      if (inputEl && initialValue) {
+        inputEl.value = initialValue;
       }
     }, []);
 
@@ -74,8 +77,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           ref={inputRef}
           placeholder="Enter a message..."
           autoFocus
-          autoCorrect="on"
-          autoCapitalize="on"
+          autoCorrect="off"
+          autoCapitalize="off"
           isDisabled={isDisabled}
           onMouseDown={event => {
             event.preventDefault();
