@@ -27,7 +27,7 @@ export const HandlePicker: FC<HandlePickerProps> = ({
 }) => {
   const {
     register,
-    formState: { errors, isValid, isSubmitted },
+    formState: { errors, isValid },
     handleSubmit,
   } = useForm<{ handle: string }>({ mode: "all" });
   const onSubmit = handleSubmit(({ handle }) => {

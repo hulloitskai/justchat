@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 
 import { gql } from "@apollo/client";
-import { useChatUpdateMutation } from "apollo";
+import { useChatInputUpdateMutation } from "apollo";
 
 gql`
   mutation ChatInputUpdate($input: UpdateInput!) {
@@ -55,7 +55,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       }
     }, []);
 
-    const [runUpdateMutation, { loading: isLoading }] = useChatUpdateMutation();
+    const [runUpdateMutation, { loading: isLoading }] =
+      useChatInputUpdateMutation();
     return (
       <InputGroup {...otherProps}>
         <Input

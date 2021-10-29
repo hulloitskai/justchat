@@ -17,7 +17,7 @@ export type Scalars = {
    *
    * The input/output is a string in RFC3339 format.
    */
-  DateTime: any;
+  DateTime: string;
 };
 
 export type BuildInfo = {
@@ -92,24 +92,24 @@ export type ChatInputUpdateMutationVariables = Exact<{
 
 export type ChatInputUpdateMutation = { __typename?: 'Mutation', update: { __typename?: 'UpdatePayload', ok: boolean } };
 
+export type MessageDataFragment = { __typename?: 'Message', senderHandle: string, body: string };
+
 export type ChatMessagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ChatMessagesQuery = { __typename?: 'Query', messages: Array<{ __typename?: 'Message', id: string, senderHandle: string, body: string, timestamp: any }> };
+export type ChatMessagesQuery = { __typename?: 'Query', messages: Array<{ __typename?: 'Message', id: string, timestamp: string, senderHandle: string, body: string }> };
 
 export type ChatEventSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ChatEventSubscription = { __typename?: 'Subscription', event: { __typename?: 'Event', key?: string | null | undefined, message?: { __typename?: 'Message', id: string, senderHandle: string, body: string } | null | undefined } };
 
-export type ChatUpdateMutationVariables = Exact<{
-  input: UpdateInput;
-}>;
-
-
-export type ChatUpdateMutation = { __typename?: 'Mutation', payload: { __typename?: 'UpdatePayload', ok: boolean } };
-
-
+export const MessageDataDocument = gql`
+    fragment MessageData on Message {
+  senderHandle
+  body
+}
+    `;
 export const ChatInputUpdateDocument = gql`
     mutation ChatInputUpdate($input: UpdateInput!) {
   update(input: $input) {
@@ -147,12 +147,11 @@ export const ChatMessagesDocument = gql`
     query ChatMessages {
   messages(take: 10) {
     id
-    senderHandle
-    body
     timestamp
+    ...MessageData
   }
 }
-    `;
+    ${MessageDataDocument}`;
 
 /**
  * __useChatMessagesQuery__
@@ -185,13 +184,12 @@ export const ChatEventDocument = gql`
   event {
     message {
       id
-      senderHandle
-      body
+      ...MessageData
     }
     key
   }
 }
-    `;
+    ${MessageDataDocument}`;
 
 /**
  * __useChatEventSubscription__
@@ -214,36 +212,3 @@ export function useChatEventSubscription(baseOptions?: Apollo.SubscriptionHookOp
       }
 export type ChatEventSubscriptionHookResult = ReturnType<typeof useChatEventSubscription>;
 export type ChatEventSubscriptionResult = Apollo.SubscriptionResult<ChatEventSubscription>;
-export const ChatUpdateDocument = gql`
-    mutation ChatUpdate($input: UpdateInput!) {
-  payload: update(input: $input) {
-    ok
-  }
-}
-    `;
-export type ChatUpdateMutationFn = Apollo.MutationFunction<ChatUpdateMutation, ChatUpdateMutationVariables>;
-
-/**
- * __useChatUpdateMutation__
- *
- * To run a mutation, you first call `useChatUpdateMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useChatUpdateMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [chatUpdateMutation, { data, loading, error }] = useChatUpdateMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useChatUpdateMutation(baseOptions?: Apollo.MutationHookOptions<ChatUpdateMutation, ChatUpdateMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ChatUpdateMutation, ChatUpdateMutationVariables>(ChatUpdateDocument, options);
-      }
-export type ChatUpdateMutationHookResult = ReturnType<typeof useChatUpdateMutation>;
-export type ChatUpdateMutationResult = Apollo.MutationResult<ChatUpdateMutation>;
-export type ChatUpdateMutationOptions = Apollo.BaseMutationOptions<ChatUpdateMutation, ChatUpdateMutationVariables>;

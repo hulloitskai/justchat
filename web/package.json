@@ -1,11 +1,11 @@
 {
   "name": "justchat-web",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "next dev -H ${JUSTCHAT_WEB_HOST:-0.0.0.0} -p ${JUSTCHAT_WEB_PORT:-8000}",
-    "format": "prettier --write .",
+    "format": "prettier --write . && eslint --fix .",
     "lint": "eslint . && tsc --noEmit",
     "build": "next build",
     "start": "next start -H ${JUSTCHAT_WEB_HOST:-0.0.0.0} -p ${JUSTCHAT_WEB_PORT:-8000}",

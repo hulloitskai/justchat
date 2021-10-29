@@ -16,17 +16,25 @@ import { gql } from "@apollo/client";
 import { useApolloClient } from "@apollo/client";
 import { formatApolloError } from "components/apollo";
 
-import { ChatEventDocument, ChatEventSubscription } from "apollo";
-import { ChatMessagesQuery } from "apollo";
+import { ChatEventDocument } from "apollo";
+import type { ChatEventSubscription } from "apollo";
+
 import { useChatMessagesQuery } from "apollo";
+import type { ChatMessagesQuery } from "apollo";
+
+gql`
+  fragment MessageData on Message {
+    senderHandle
+    body
+  }
+`;
 
 gql`
   query ChatMessages {
     messages(take: 10) {
       id
-      senderHandle
-      body
       timestamp
+      ...MessageData
     }
   }
 `;
@@ -36,18 +44,9 @@ gql`
     event {
       message {
         id
-        senderHandle
-        body
+        ...MessageData
       }
       key
-    }
-  }
-`;
-
-gql`
-  mutation ChatUpdate($input: UpdateInput!) {
-    payload: update(input: $input) {
-      ok
     }
   }
 `;
