@@ -52,6 +52,7 @@ impl Chatroom {
         // Update current message
         if let Some(mut message) = current_message.take() {
             if message.sender_handle == sender_handle {
+                // Update current message based on key
                 *current_message = match key.as_str() {
                     "Backspace" => {
                         message.body.pop();
@@ -71,10 +72,13 @@ impl Chatroom {
                     _ => bail!("invalid key"),
                 };
 
+                // Broadcast key
                 let event = Event::Key(key);
                 self.sx.send(event).context("failed to broadcast event")?;
 
                 return Ok(current_message.clone());
+            } else {
+                *current_message = Some(message);
             }
         }
 
@@ -82,6 +86,15 @@ impl Chatroom {
         *current_message = match key.as_str() {
             "Backspace" | "Enter" => current_message.take(),
             ch if ch.len() == 1 => {
+                // Save previous message
+                if let Some(mut message) = current_message.take() {
+                    message
+                        .save(ctx)
+                        .await
+                        .context("failed to save message")?;
+                }
+
+                // Create new message
                 let message = Record::new({
                     Message::builder()
                         .sender_handle(sender_handle)
@@ -89,6 +102,7 @@ impl Chatroom {
                         .build()
                 });
 
+                // Broadcast message
                 let event = Event::Message(message.clone());
                 self.sx.send(event).context("failed to broadcast event")?;
 
