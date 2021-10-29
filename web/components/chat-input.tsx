@@ -55,6 +55,17 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       }
     }, []);
 
+    useEffect(() => {
+      if (!isDisabled) {
+        setTimeout(() => {
+          const inputEl = inputRef.current;
+          if (inputEl && document.activeElement !== inputEl) {
+            inputEl.focus();
+          }
+        }, 10);
+      }
+    }, [isDisabled]);
+
     const [runUpdateMutation, { loading: isLoading }] =
       useChatInputUpdateMutation();
     return (
