@@ -37,7 +37,6 @@ const typePolicies: TypePolicies = {
               return (item as Message).id;
             }
           });
-          console.log({ existing, incoming, outgoing });
           return outgoing;
         },
       },

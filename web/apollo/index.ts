@@ -92,8 +92,6 @@ export type ChatInputUpdateMutationVariables = Exact<{
 
 export type ChatInputUpdateMutation = { __typename?: 'Mutation', update: { __typename?: 'UpdatePayload', ok: boolean } };
 
-export type MessageDataFragment = { __typename?: 'Message', senderHandle: string, body: string };
-
 export type ChatMessagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -104,12 +102,7 @@ export type ChatEventSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 export type ChatEventSubscription = { __typename?: 'Subscription', event: { __typename?: 'Event', key?: string | null | undefined, message?: { __typename?: 'Message', id: string, senderHandle: string, body: string } | null | undefined } };
 
-export const MessageDataDocument = gql`
-    fragment MessageData on Message {
-  senderHandle
-  body
-}
-    `;
+
 export const ChatInputUpdateDocument = gql`
     mutation ChatInputUpdate($input: UpdateInput!) {
   update(input: $input) {
@@ -148,10 +141,11 @@ export const ChatMessagesDocument = gql`
   messages(take: 10) {
     id
     timestamp
-    ...MessageData
+    senderHandle
+    body
   }
 }
-    ${MessageDataDocument}`;
+    `;
 
 /**
  * __useChatMessagesQuery__
@@ -184,12 +178,13 @@ export const ChatEventDocument = gql`
   event {
     message {
       id
-      ...MessageData
+      senderHandle
+      body
     }
     key
   }
 }
-    ${MessageDataDocument}`;
+    `;
 
 /**
  * __useChatEventSubscription__

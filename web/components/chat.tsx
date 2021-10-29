@@ -23,18 +23,12 @@ import { useChatMessagesQuery } from "apollo";
 import type { ChatMessagesQuery } from "apollo";
 
 gql`
-  fragment MessageData on Message {
-    senderHandle
-    body
-  }
-`;
-
-gql`
   query ChatMessages {
     messages(take: 10) {
       id
       timestamp
-      ...MessageData
+      senderHandle
+      body
     }
   }
 `;
@@ -44,7 +38,8 @@ gql`
     event {
       message {
         id
-        ...MessageData
+        senderHandle
+        body
       }
       key
     }

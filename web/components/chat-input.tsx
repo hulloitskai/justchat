@@ -39,8 +39,9 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
 
     useImperativeHandle(ref, () => ({
       reset: () => {
-        if (inputRef.current) {
-          inputRef.current.value = "";
+        const inputEl = inputRef.current;
+        if (inputEl) {
+          inputEl.value = "";
         }
         setIsDisabled(true);
         setTimeout(() => {
@@ -50,21 +51,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
     }));
 
     useEffect(() => {
-      if (inputRef.current && initialValue) {
-        inputRef.current.value = initialValue;
+      const inputEl = inputRef.current;
+      if (inputEl && initialValue) {
+        inputEl.value = initialValue;
       }
     }, []);
-
-    useEffect(() => {
-      if (!isDisabled) {
-        setTimeout(() => {
-          const inputEl = inputRef.current;
-          if (inputEl && document.activeElement !== inputEl) {
-            inputEl.focus();
-          }
-        }, 10);
-      }
-    }, [isDisabled]);
 
     const [runUpdateMutation, { loading: isLoading }] =
       useChatInputUpdateMutation();
@@ -74,8 +65,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           ref={inputRef}
           placeholder="Enter a message..."
           autoFocus
-          autoCorrect="on"
-          autoCapitalize="on"
+          autoCorrect="off"
+          autoCapitalize="off"
           isDisabled={isDisabled}
           onMouseDown={event => {
             event.preventDefault();
@@ -85,6 +76,9 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             }
           }}
           onKeyDown={event => {
+            if (isDisabled) {
+              return;
+            }
             const { key, metaKey, ctrlKey, currentTarget } = event;
             if (metaKey || ctrlKey) {
               if (metaKey && key === "l") {
