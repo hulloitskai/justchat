@@ -3,6 +3,7 @@ import type { NextPage } from "next";
 
 import { Container, VStack } from "@chakra-ui/react";
 import { Text } from "@chakra-ui/react";
+import { Button } from "@chakra-ui/react";
 import { Collapse } from "@chakra-ui/react";
 import { chakra } from "@chakra-ui/react";
 
@@ -26,6 +27,13 @@ const HomePage: NextPage = () => {
           <HandlePicker onPick={setHandle} />
         </Collapse>
         <Chat handle={handle} flex={1} />
+        <Button
+          onClick={() => {
+            throw new Error("Something went wrong??");
+          }}
+        >
+          Fail
+        </Button>
       </VStack>
     </Container>
   );
