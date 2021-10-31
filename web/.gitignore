@@ -39,3 +39,6 @@ pids
 *.seed
 *.pid.lock
 
+
+# == Sentry ==
+.sentryclirc

@@ -93,13 +93,25 @@ async fn main() -> Result<()> {
         }
     };
 
+    // Read build info
+    let build = {
+        let timestamp = DateTime::<FixedOffset>::parse_from_rfc3339(env!(
+            "BUILD_TIMESTAMP"
+        ))
+        .context("failed to parse build timestamp")?;
+        let version = env!("CARGO_PKG_VERSION").to_owned();
+        BuildInfo { timestamp, version }
+    };
+
     // Initialize Sentry (if SENTRY_DSN is set)
-    let _guard = match env_var("JUSTCHAT_API_SENTRY_DSN") {
+    let _guard = match env_var("SENTRY_DSN") {
         Ok(dsn) => {
             debug!(target: "justchat-api", "initializing Sentry");
             let dsn = dsn.into_dsn().context("failed to parse Sentry DSN")?;
+            let release = format!("justchat-api@{}", &build.version);
             let options = SentryOptions {
                 dsn,
+                release: Some(release.into()),
                 environment: environment.clone().map(Into::into),
                 ..default()
             };
@@ -111,16 +123,6 @@ async fn main() -> Result<()> {
             return Err(error)
                 .context("failed to read environment variable SENTRY_DSN")
         }
-    };
-
-    // Read build info
-    let build = {
-        let timestamp = DateTime::<FixedOffset>::parse_from_rfc3339(env!(
-            "BUILD_TIMESTAMP"
-        ))
-        .context("failed to parse build timestamp")?;
-        let version = env!("CARGO_PKG_VERSION").to_owned();
-        BuildInfo { timestamp, version }
     };
 
     // Connect to database
