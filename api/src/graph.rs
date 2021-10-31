@@ -19,6 +19,9 @@ pub use subscription::*;
 mod mutation;
 pub use mutation::*;
 
+mod test;
+use test::*;
+
 mod user;
 use user::*;
 

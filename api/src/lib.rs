@@ -4,6 +4,9 @@ pub mod entities;
 pub mod env;
 pub mod graph;
 pub mod services;
+pub mod util;
+
+use util::*;
 
 use async_trait::async_trait;
 use lazy_static::lazy_static;
@@ -36,6 +39,11 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::from_str as from_json_str;
+use serde_json::from_value as from_json;
+use serde_json::json;
+use serde_json::to_string as to_json_string;
+use serde_json::to_value as to_json;
 
 use futures::{Future, Stream, TryFuture, TryStream};
 use futures_util::future::{join_all, try_join_all};
@@ -53,11 +61,3 @@ use chrono::NaiveTime as Time;
 use chrono::{Duration, FixedOffset, TimeZone, Utc};
 
 type DateTime<Tz = Utc> = GenericDateTime<Tz>;
-
-pub fn default<T: Default>() -> T {
-    Default::default()
-}
-
-pub fn now() -> DateTime {
-    Utc::now()
-}

@@ -28,10 +28,6 @@ pub fn load() -> Result<()> {
         }
     }
 
-    // Configure logging.
-    let log = var_or("JUSTCHAT_API_LOG", "warn,justchat-api=info").unwrap();
-    set_env_var("RUST_LOG", log);
-
     // Configure backtraces.
     remove_env_var("RUST_BACKTRACE");
     if None == var("JUSTCHAT_API_BACKTRACE").ok() {

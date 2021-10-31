@@ -71,7 +71,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       <InputGroup {...otherProps}>
         <Input
           ref={inputRef}
-          placeholder="Enter a message..."
+          placeholder="Type a message..."
           autoFocus
           autoCorrect="off"
           autoComplete="off"

@@ -5,6 +5,7 @@ use justchat_api::env::var_or as env_var_or;
 use justchat_api::graph::{Mutation, Query, Subscription};
 use justchat_api::services::Config as ServicesConfig;
 use justchat_api::services::{Services, Settings};
+use justchat_api::util::default;
 
 use std::borrow::Cow;
 use std::convert::Infallible;
@@ -33,6 +34,7 @@ use graphql::http::GraphQLPlaygroundConfig;
 use graphql::Request as GraphQLRequest;
 use graphql::Response as GraphQLResponse;
 use graphql::Schema;
+use graphql::ServerError as GraphQLError;
 
 use graphql_apq::ApolloPersistedQueries as GraphQLAPQExtension;
 use graphql_apq::LruCacheStorage as GraphQLAPQStorage;
@@ -45,20 +47,71 @@ use graphql_warp::Response as WarpGraphQLResponse;
 use mongodb::options::ClientOptions as MongoClientOptions;
 use mongodb::Client as MongoClient;
 
-use tracing::{error, info};
-use tracing_subscriber::fmt::init as init_tracer;
+use tracing::{debug, error, info};
+use tracing_subscriber::fmt::layer as fmt_tracing_layer;
+use tracing_subscriber::layer::SubscriberExt as TracingSubscriberLayerExt;
+use tracing_subscriber::registry as tracing_registry;
+use tracing_subscriber::util::SubscriberInitExt as TracingSubscriberInitExt;
+use tracing_subscriber::EnvFilter as TracingEnvFilter;
+
+use sentry::init as init_sentry;
+use sentry::ClientOptions as SentryOptions;
+use sentry::IntoDsn as IntoSentryDsn;
+use sentry_tracing::layer as sentry_tracing_layer;
+
+use serde::Serialize;
+use serde_json::to_string as to_json_string;
 
 use anyhow::Error;
 use bson::doc;
 use chrono::{DateTime, FixedOffset};
-use serde::Serialize;
 use tokio::main as tokio;
 
 #[tokio]
 async fn main() -> Result<()> {
-    // Load environment variables and initialize tracer
+    // Load environment variables
     load_env().context("failed to load environment variables")?;
-    init_tracer();
+
+    // Initialize tracing subscriber
+    debug!(target: "justchat-api", "initializing tracing subscriber");
+    {
+        let env_filter_layer = TracingEnvFilter::from_env("JUSTCHAT_API_LOG");
+        tracing_registry()
+            .with(env_filter_layer)
+            .with(fmt_tracing_layer())
+            .with(sentry_tracing_layer())
+            .try_init()
+            .context("failed to initialize tracing subscriber")?;
+    }
+
+    let environment = match env_var("JUSTCHAT_ENV") {
+        Ok(environment) => Some(environment),
+        Err(EnvVarError::NotPresent) => None,
+        Err(error) => {
+            return Err(error)
+                .context("failed to read environment variable JUSTCHAT_ENV")
+        }
+    };
+
+    // Initialize Sentry (if SENTRY_DSN is set)
+    let _guard = match env_var("JUSTCHAT_API_SENTRY_DSN") {
+        Ok(dsn) => {
+            debug!(target: "justchat-api", "initializing Sentry");
+            let dsn = dsn.into_dsn().context("failed to parse Sentry DSN")?;
+            let options = SentryOptions {
+                dsn,
+                environment: environment.clone().map(Into::into),
+                ..default()
+            };
+            let guard = init_sentry(options);
+            Some(guard)
+        }
+        Err(EnvVarError::NotPresent) => None,
+        Err(error) => {
+            return Err(error)
+                .context("failed to read environment variable SENTRY_DSN")
+        }
+    };
 
     // Read build info
     let build = {
@@ -71,6 +124,7 @@ async fn main() -> Result<()> {
     };
 
     // Connect to database
+    info!(target: "justchat-api", "connecting to database");
     let database_client = {
         let uri = env_var_or("MONGO_URI", "mongodb://localhost:27017")
             .context("failed to read environment variable MONGO_URI")?;
@@ -85,8 +139,6 @@ async fn main() -> Result<()> {
             .context("failed to build MongoDB client")?
     };
 
-    // Connect to MongoDB
-    info!(target: "justchat-api", "connecting to database");
     let database = {
         let name = env_var_or("MONGO_DATABASE", "justchat")
             .context("failed to read environment variable MONGO_DATABASE")?;
@@ -319,7 +371,26 @@ fn trace_graphql_response(response: &GraphQLResponse) {
         .for_each(|error| match error.message.as_str() {
             "PersistedQueryNotFound" => (),
             _ => {
-                error!(target: "justchat-api", "GraphQL error: {:#}", error)
+                let GraphQLError {
+                    message,
+                    locations,
+                    path,
+                    ..
+                } = error;
+                let locations = {
+                    let locations = locations
+                        .into_iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>();
+                    to_json_string(&locations).unwrap()
+                };
+                let path = to_json_string(path).unwrap();
+                error!(
+                    target: "justchat-api::graphql",
+                    %locations,
+                    %path,
+                    "{}", message,
+                );
             }
         })
 }
