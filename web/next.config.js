@@ -15,6 +15,7 @@ const config = {
   serverRuntimeConfig: {
     JUSTCHAT_VERSION,
     JUSTCHAT_API_URL,
+    SENTRY_DSN,
   },
 };
 

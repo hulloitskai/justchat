@@ -139,9 +139,10 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
               case "Backspace":
                 setCurrentMessage(message => {
                   if (!message) {
-                    throw new Error(
-                      "Attempted to update a nonexistent message.",
+                    console.warn(
+                      `[justchat-web] Attempted to update a nonexistent message.`,
                     );
+                    return message;
                   }
                   const { body, ...otherFields } = message;
                   return { body: body.slice(0, -1), ...otherFields };
@@ -150,9 +151,10 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
               default:
                 setCurrentMessage(message => {
                   if (!message) {
-                    throw new Error(
-                      "Attempted to update a nonexistent message.",
+                    console.warn(
+                      `[justchat-web] Attempted to update a nonexistent message.`,
                     );
+                    return message;
                   }
                   const { body, ...otherFields } = message;
                   return { body: body.concat(key), ...otherFields };
