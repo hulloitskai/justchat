@@ -15,6 +15,7 @@ use entities::Message;
 #[derive(Debug)]
 pub struct Chatroom {
     current_message: AsyncMutex<Option<Record<Message>>>,
+    current_message_protection_duration: Duration,
     sx: BroadcastSender<Event>,
     rx: BroadcastReceiver<Event>,
 }
@@ -24,6 +25,7 @@ impl Chatroom {
         let (sx, rx) = broadcast_channel(256);
         Chatroom {
             current_message: default(),
+            current_message_protection_duration: Duration::milliseconds(500),
             sx,
             rx,
         }
@@ -79,7 +81,17 @@ impl Chatroom {
                 return Ok(current_message.clone());
             } else {
                 // Retain current message
-                *current_message = Some(message);
+                *current_message = Some(message.clone());
+
+                // Re-broadcast current message in the event of a race
+                // condition
+                let protected_until = message.created_at()
+                    + self.current_message_protection_duration;
+                if now() < protected_until {
+                    let event = Event::Message(message);
+                    self.sx.send(event).context("failed to broadcast event")?;
+                    return Ok(current_message.clone());
+                }
             }
         }
 
