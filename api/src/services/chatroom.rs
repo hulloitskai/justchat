@@ -49,7 +49,7 @@ impl Chatroom {
         let Update { sender_handle, key } = update;
         let mut current_message = self.current_message.lock().await;
 
-        // Update current message
+        // Maybe update current message
         if let Some(mut message) = current_message.take() {
             if message.sender_handle == sender_handle {
                 // Update current message based on key
@@ -78,6 +78,7 @@ impl Chatroom {
 
                 return Ok(current_message.clone());
             } else {
+                // Retain current message
                 *current_message = Some(message);
             }
         }

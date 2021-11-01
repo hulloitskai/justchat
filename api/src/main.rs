@@ -266,8 +266,10 @@ async fn main() -> Result<()> {
     let filter = (path_end().and(graphql_playground_filter))
         .or(graphql_filter)
         .with({
-            let cors =
-                cors().allow_method(Method::POST).allow_header(CONTENT_TYPE);
+            let cors = cors()
+                .allow_method(Method::POST)
+                .allow_header(CONTENT_TYPE)
+                .allow_header("sentry-trace");
             let cors = match env_var("JUSTCHAT_API_CORS_ALLOW_ORIGIN") {
                 Ok(origin) => {
                     if origin == "*" {

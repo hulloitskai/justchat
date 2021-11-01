@@ -114,7 +114,7 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
       .subscribe<ChatEventSubscription>({
         query: ChatEventDocument,
       })
-      .subscribe(({ data }) => {
+      .subscribe(({ data, errors }) => {
         if (data?.event) {
           const { message, key } = data.event;
           if (message) {
@@ -139,7 +139,7 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
               case "Backspace":
                 setCurrentMessage(message => {
                   if (!message) {
-                    console.warn(
+                    console.error(
                       `[justchat-web] Attempted to update a nonexistent message.`,
                     );
                     return message;
@@ -151,7 +151,7 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
               default:
                 setCurrentMessage(message => {
                   if (!message) {
-                    console.warn(
+                    console.error(
                       `[justchat-web] Attempted to update a nonexistent message.`,
                     );
                     return message;
@@ -160,6 +160,13 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
                   return { body: body.concat(key), ...otherFields };
                 });
             }
+          }
+        }
+        if (errors) {
+          for (const error of errors) {
+            console.error(
+              `[justchat-web] Error while streaming events: ${error}`,
+            );
           }
         }
       });
