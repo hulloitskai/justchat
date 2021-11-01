@@ -11,13 +11,18 @@ import { ApolloError, ServerError } from "@apollo/client";
 import { getApolloContext } from "@apollo/client";
 import { Reference } from "@apollo/client";
 
-import { HttpLink, split } from "@apollo/client";
+import { HttpLink } from "@apollo/client";
+import { split as splitLinks } from "@apollo/client";
+import { from as mergeLinks } from "@apollo/client";
+import { RetryLink } from "@apollo/client/link/retry";
+import { SentryLink } from "apollo-link-sentry";
 import { WebSocketLink } from "@apollo/client/link/ws";
+
 import { getMainDefinition } from "@apollo/client/utilities";
 import { InMemoryCache, NormalizedCacheObject } from "@apollo/client";
 import { TypedTypePolicies as TypePolicies } from "apollo/helpers";
 
-import { Message } from "apollo";
+import type { Message } from "apollo";
 
 import { JUSTCHAT_API_PUBLIC_URL, JUSTCHAT_API_URL } from "consts";
 
@@ -44,7 +49,7 @@ const typePolicies: TypePolicies = {
   },
 };
 
-const createLink = (): ApolloLink => {
+const createTerminatingLink = (): ApolloLink => {
   const httpLink = new HttpLink({
     uri:
       typeof window !== "undefined"
@@ -73,7 +78,7 @@ const createLink = (): ApolloLink => {
     },
   });
 
-  return split(
+  return splitLinks(
     ({ query }) => {
       const definition = getMainDefinition(query);
       return (
@@ -89,7 +94,11 @@ const createLink = (): ApolloLink => {
 const createApolloClient = (): Client<NormalizedCacheObject> => {
   return new Client({
     ssrMode: typeof window === "undefined",
-    link: createLink(),
+    link: mergeLinks([
+      new RetryLink(),
+      new SentryLink(),
+      createTerminatingLink(),
+    ]),
     cache: new InMemoryCache({
       typePolicies,
     }),
