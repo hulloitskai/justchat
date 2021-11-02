@@ -9,10 +9,9 @@ pub mod util;
 use util::*;
 
 use async_trait::async_trait;
-use lazy_static::lazy_static;
-
 use delegate::delegate;
 use derivative::Derivative;
+use lazy_static::lazy_static;
 use moka::future::{Cache, CacheBuilder};
 use regex::Regex;
 use request::Client as HttpClient;

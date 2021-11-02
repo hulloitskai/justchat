@@ -5,18 +5,18 @@ import merge from "deepmerge";
 import { useToast } from "components/toast";
 
 import { ApolloClient as Client } from "@apollo/client";
-import { ApolloLink } from "@apollo/client";
 import { ApolloProvider as Provider } from "@apollo/client";
 import { ApolloError, ServerError } from "@apollo/client";
 import { getApolloContext } from "@apollo/client";
-import { Reference } from "@apollo/client";
+import type { Reference } from "@apollo/client";
 
 import { HttpLink } from "@apollo/client";
-import { split as splitLinks } from "@apollo/client";
-import { from as mergeLinks } from "@apollo/client";
 import { RetryLink } from "@apollo/client/link/retry";
 import { SentryLink } from "apollo-link-sentry";
-import { WebSocketLink } from "@apollo/client/link/ws";
+import { WebSocketLink as WsLink } from "@apollo/client/link/ws";
+import { split as splitLinks } from "@apollo/client";
+import { from as mergeLinks } from "@apollo/client";
+import type { ApolloLink } from "@apollo/client";
 
 import { getMainDefinition } from "@apollo/client/utilities";
 import { InMemoryCache, NormalizedCacheObject } from "@apollo/client";
@@ -60,7 +60,7 @@ const createTerminatingLink = (): ApolloLink => {
     return httpLink;
   }
 
-  const wsLink = new WebSocketLink({
+  const wsLink = new WsLink({
     uri: (() => {
       const { protocol, host, pathname } = new URL(JUSTCHAT_API_PUBLIC_URL);
       const path = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
@@ -77,7 +77,6 @@ const createTerminatingLink = (): ApolloLink => {
       reconnect: true,
     },
   });
-
   return splitLinks(
     ({ query }) => {
       const definition = getMainDefinition(query);
@@ -99,9 +98,7 @@ const createApolloClient = (): Client<NormalizedCacheObject> => {
       new SentryLink(),
       createTerminatingLink(),
     ]),
-    cache: new InMemoryCache({
-      typePolicies,
-    }),
+    cache: new InMemoryCache({ typePolicies }),
   });
 };
 

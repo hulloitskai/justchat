@@ -1,6 +1,6 @@
 [package]
 name = "justchat-api"
-version = "0.1.16"
+version = "0.1.17"
 edition = "2021"
 rust-version = "1.56.0"
 
@@ -27,7 +27,6 @@ phones = { package = "phonenumber", version = "^0.3.1" }
 regex = { version = "^1.5.4" }
 serde = { version = "^1.0.130", features = ["derive"] }
 serde_json = "^1.0.68"
-sentry_tracing = { package = "sentry-tracing", version = "^0.23.0" }
 tracing = "^0.1.28"
 typed_builder = { package = "typed-builder", version = "^0.9.1" }
 url = { version = "^2.2.2", features = ["serde"] }
@@ -64,6 +63,10 @@ features = [
   "rustls",
   "anyhow",
 ]
+
+[dependencies.sentry_tracing]
+package = "sentry-tracing"
+version = "^0.23.0"
 
 [dependencies.tokio]
 version = "^1.12.0"

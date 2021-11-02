@@ -73,7 +73,7 @@ async fn main() -> Result<()> {
     load_env().context("failed to load environment variables")?;
 
     // Initialize tracing subscriber
-    debug!(target: "justchat-api", "initializing tracing subscriber");
+    debug!(target: "justchat-api", "initializing tracer");
     {
         let env_filter_layer = TracingEnvFilter::from_env("JUSTCHAT_API_LOG");
         tracing_registry()
