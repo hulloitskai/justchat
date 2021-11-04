@@ -34,7 +34,7 @@ pub fn load() -> Result<()> {
 
     // Configure backtraces
     remove_env_var("RUST_BACKTRACE");
-    if None == var("TEMPLATE_API_BACKTRACE").ok() {
+    if None == var("JUSTCHAT_API_BACKTRACE").ok() {
         set_env_var("RUST_BACKTRACE", "1")
     }
     Ok(())
