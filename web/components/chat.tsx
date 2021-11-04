@@ -140,7 +140,7 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
                 setCurrentMessage(message => {
                   if (!message) {
                     console.error(
-                      `[justchat-web] Attempted to update a nonexistent message.`,
+                      `[Chat] Attempted to update a nonexistent message.`,
                     );
                     return message;
                   }
@@ -152,7 +152,7 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
                 setCurrentMessage(message => {
                   if (!message) {
                     console.error(
-                      `[justchat-web] Attempted to update a nonexistent message.`,
+                      `[Chat] Attempted to update a nonexistent message.`,
                     );
                     return message;
                   }
@@ -164,9 +164,7 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
         }
         if (errors) {
           for (const error of errors) {
-            console.error(
-              `[justchat-web] Error while streaming events: ${error}`,
-            );
+            console.error(`[Chat] Error while streaming events: ${error}`);
           }
         }
       });

@@ -12,7 +12,6 @@ use async_trait::async_trait;
 use delegate::delegate;
 use derivative::Derivative;
 use lazy_static::lazy_static;
-use moka::future::{Cache, CacheBuilder};
 use regex::Regex;
 use request::Client as HttpClient;
 use typed_builder::TypedBuilder as Builder;

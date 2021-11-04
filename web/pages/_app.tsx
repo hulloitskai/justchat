@@ -51,9 +51,7 @@ App.getInitialProps = async (
         </ApolloProviderSSR>,
       );
     } catch (error) {
-      console.error(
-        `[justchat-web] Error while pre-fetching queries: ${error}`,
-      );
+      console.error(`[App] Error while pre-fetching queries: ${error}`);
     }
     const apolloState = client.extract();
 

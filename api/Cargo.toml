@@ -1,6 +1,6 @@
 [package]
 name = "justchat-api"
-version = "0.1.17"
+version = "0.1.18"
 edition = "2021"
 rust-version = "1.56.0"
 
@@ -20,30 +20,33 @@ futures = { package = "futures-core", version = "^0.3.17" }
 futures_util = { package = "futures-util", version = "^0.3.17" }
 http = "^0.2.5"
 lazy_static = "^1.4.0"
-moka = { version = "^0.6.1", features = ["future"] }
 mongodb = { version = "^2.0.1", features = ["bson-chrono-0_4"] }
-oauth2 = "^4.1.0"
 phones = { package = "phonenumber", version = "^0.3.1" }
 regex = { version = "^1.5.4" }
+sentry_tracing = { package = "sentry-tracing", version = "^0.23.0 "}
 serde = { version = "^1.0.130", features = ["derive"] }
 serde_json = "^1.0.68"
-tracing = "^0.1.28"
+thiserror = "^1.0.30"
+tower = "^0.4.10"
+tracing = { version = "^0.1.28", features = ["log"] }
 typed_builder = { package = "typed-builder", version = "^0.9.1" }
 url = { version = "^2.2.2", features = ["serde"] }
-walkdir = "^2.3.2"
-warp = { version = "^0.3.1", default-features = false, features = ["websocket"] }
-yaml = { package = "yaml-rust", version = "^0.4.5" }
-yaml_front_matter = { package = "frontmatter", version = "^0.4.0" }
 
+[dependencies.axum]
+version = "^0.3.0"
+default-features = false
+features = ["http2", "ws", "headers", "json"]
 
 [dependencies.graphql]
 package = "async-graphql"
-version = "^2.10.1"
-features = ["chrono", "url", "apollo_persisted_queries"]
+features = ["tracing", "chrono", "url", "apollo_persisted_queries"]
+git = "https://github.com/hulloitskai/async-graphql"
+rev = "2f9b352"
 
-[dependencies.graphql_warp]
-package = "async-graphql-warp"
-version = "^2.10.1"
+[dependencies.graphql_axum]
+package = "async-graphql-axum"
+git = "https://github.com/hulloitskai/async-graphql"
+rev = "2f9b352"
 
 [dependencies.request]
 package = "reqwest"
@@ -64,10 +67,6 @@ features = [
   "anyhow",
 ]
 
-[dependencies.sentry_tracing]
-package = "sentry-tracing"
-version = "^0.23.0"
-
 [dependencies.tokio]
 version = "^1.12.0"
 features = ["rt-multi-thread", "macros", "sync"]
@@ -76,6 +75,12 @@ features = ["rt-multi-thread", "macros", "sync"]
 package = "tokio-stream"
 version = "^0.1.7"
 features = ["sync"]
+
+[dependencies.tower_http]
+package = "tower-http"
+features = ["trace", "cors"]
+git = "https://github.com/tower-rs/tower-http"
+branch = "cors"
 
 [dependencies.tracing_subscriber]
 package = "tracing-subscriber"

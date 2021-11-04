@@ -7,7 +7,7 @@ const TestPage: NextPage = () => {
   return (
     <Button
       onClick={() => {
-        console.error("[justchat-web] This is an error log!");
+        console.error("[TestPage] This is an error log!");
       }}
     >
       Log An Error

@@ -88,8 +88,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
             if (isDisabled) {
               return;
             }
-            const { key, metaKey, ctrlKey, currentTarget } = event;
-            if (metaKey || ctrlKey) {
+            const { key, metaKey, ctrlKey, altKey, currentTarget } = event;
+            if (metaKey || ctrlKey || altKey) {
               if (metaKey && key === "l") {
                 return;
               }

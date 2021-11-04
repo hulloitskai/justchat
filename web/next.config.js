@@ -47,9 +47,9 @@ if (!!SENTRY_URL && !!SENTRY_ORG && !!SENTRY_PROJECT && !!SENTRY_AUTH_TOKEN) {
     .map(([key]) => key);
 
   console.warn(
-    `[justchat-web] Missing environment variables (${missingVariables.join(
+    `[Sentry] Skip uploading sourcemaps (missing variables: ${missingVariables.join(
       ", ",
-    )}) to upload sourcemaps to Sentry; skipping.`,
+    )})`,
   );
   module.exports = config;
 }
