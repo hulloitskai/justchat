@@ -26,7 +26,6 @@ regex = { version = "^1.5.4" }
 sentry_tracing = { package = "sentry-tracing", version = "^0.23.0 "}
 serde = { version = "^1.0.130", features = ["derive"] }
 serde_json = "^1.0.68"
-thiserror = "^1.0.30"
 tower = "^0.4.10"
 tracing = { version = "^0.1.28", features = ["log"] }
 typed_builder = { package = "typed-builder", version = "^0.9.1" }

@@ -265,34 +265,6 @@ async fn main() -> Result<()> {
         })
         .into_make_service();
 
-    // // Build root filter
-    // let filter = (path_end().and(graphql_playground_filter))
-    //     .or(graphql_filter)
-    //     .with({
-    //         let cors = cors()
-    //             .allow_method(Method::POST)
-    //             .allow_header(CONTENT_TYPE)
-    //             .allow_header("sentry-trace");
-    //         let cors = match env_var("JUSTCHAT_API_CORS_ALLOW_ORIGIN") {
-    //             Ok(origin) => {
-    //                 if origin == "*" {
-    //                     cors.allow_any_origin()
-    //                 } else {
-    //                     cors.allow_origins(origin.split(','))
-    //                 }
-    //             }
-    //             Err(EnvVarError::NotPresent) => cors,
-    //             Err(error) => {
-    //                 return Err(error).context(
-    //                     "invalid environment variable \
-    //                     JUSTCHAT_API_CORS_ALLOW_ORIGIN",
-    //                 )
-    //             }
-    //         };
-    //         cors
-    //     })
-    //     .recover(recover);
-
     let host = env_var_or("JUSTCHAT_API_HOST", "0.0.0.0")
         .context("failed to get environment variable JUSTCHAT_API_HOST")?;
     let port = env_var_or("JUSTCHAT_API_PORT", "3000")
@@ -469,70 +441,5 @@ async fn graphql_playground_handler(
 //         });
 //         let body = JsonResponse(body);
 //         (status_code, body).into_response()
-//     }
-// }
-
-// async fn recover(rejection: Rejection) -> Result<impl Reply, Infallible> {
-//     let (error, status_code) = if rejection.is_not_found() {
-//         let error = ErrorRejection::new("not found");
-//         (error, StatusCode::NOT_FOUND)
-//     } else if let Some(error) = rejection.find::<ErrorRejection>() {
-//         let error = error.to_owned();
-//         (error, StatusCode::INTERNAL_SERVER_ERROR)
-//     } else if let Some(error) = rejection.find::<WarpGraphQLBadRequest>() {
-//         let WarpGraphQLBadRequest(error) = error;
-//         let error = ErrorRejection::new(error.to_string());
-//         (error, StatusCode::BAD_REQUEST)
-//     } else if let Some(error) = rejection.find::<Error>() {
-//         let error = ErrorRejection::from(error);
-//         (error, StatusCode::INTERNAL_SERVER_ERROR)
-//     } else {
-//         error!(target: "justchat-api", "unhandled rejection: {:?}", &rejection);
-//         let error = ErrorRejection::new("internal server error");
-//         (error, StatusCode::INTERNAL_SERVER_ERROR)
-//     };
-
-//     let reply = ErrorReply {
-//         errors: vec![error],
-//         status_code: status_code.as_u16(),
-//     };
-//     let reply = reply_json(&reply);
-//     let reply = reply_with_status(reply, status_code);
-//     Ok::<_, Infallible>(reply)
-// }
-
-// #[derive(Debug, Clone, Serialize)]
-// #[serde(rename_all = "camelCase")]
-// struct ErrorReply {
-//     errors: Vec<ErrorRejection>,
-//     status_code: u16,
-// }
-
-// #[derive(Debug, Clone, Serialize)]
-// #[serde(rename_all = "camelCase")]
-// struct ErrorRejection {
-//     message: Cow<'static, str>,
-// }
-
-// impl ErrorRejection {
-//     pub fn new(msg: impl Into<Cow<'static, str>>) -> Self {
-//         ErrorRejection {
-//             message: msg.into(),
-//         }
-//     }
-// }
-
-// impl Reject for ErrorRejection {}
-
-// impl From<&Error> for ErrorRejection {
-//     fn from(error: &Error) -> Self {
-//         let msg = format!("{:#}", error);
-//         Self::new(msg)
-//     }
-// }
-
-// impl From<Error> for ErrorRejection {
-//     fn from(error: Error) -> Self {
-//         Self::from(&error)
 //     }
 // }
