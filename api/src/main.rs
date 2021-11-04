@@ -78,18 +78,16 @@ async fn main() -> Result<()> {
     // Load environment variables
     load_env().context("failed to load environment variables")?;
 
-    // Initialize tracing subscriber
+    // Initialize tracer
     debug!("initializing tracer");
-    {
-        let env_filter_layer = TracingEnvFilter::from_env("JUSTCHAT_API_LOG");
-        tracing_registry()
-            .with(env_filter_layer)
-            .with(fmt_tracing_layer())
-            .with(sentry_tracing_layer())
-            .try_init()
-            .context("failed to initialize tracing subscriber")?;
-    }
+    tracing_registry()
+        .with(TracingEnvFilter::from_default_env())
+        .with(fmt_tracing_layer())
+        .with(sentry_tracing_layer())
+        .try_init()
+        .context("failed to initialize tracer")?;
 
+    // Read environment name
     let environment = match env_var("JUSTCHAT_ENV") {
         Ok(environment) => Some(environment),
         Err(EnvVarError::NotPresent) => None,
