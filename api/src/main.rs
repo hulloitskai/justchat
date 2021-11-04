@@ -248,8 +248,13 @@ async fn main() -> Result<()> {
                     let origins =
                         [web_url, web_public_url, api_url, api_public_url]
                             .into_iter()
-                            .map(Url::as_str)
-                            .map(HeaderValue::from_str)
+                            .map(|url| {
+                                let mut url = url.to_owned();
+                                url.set_path("");
+                                let mut url = url.to_string();
+                                url.pop();
+                                HeaderValue::from_str(&url)
+                            })
                             .collect::<Result<Vec<_>, InvalidHeaderValue>>()
                             .context("failed to parse CORS origin")?;
                     CorsOrigin::list(origins).into()
