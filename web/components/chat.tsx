@@ -258,7 +258,7 @@ const ChatMessage: FC<ChatMessageProps> = ({
       >
         {senderHandle}
       </Badge>
-      <Text color="gray.800" fontSize="sm">
+      <Text color="gray.800" fontSize="sm" whiteSpace="pre-wrap">
         {body || <>&nbsp;</>}
         {showMarker && (
           <chakra.span color="pink.500" fontWeight="semibold">
