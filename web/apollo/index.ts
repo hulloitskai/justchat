@@ -42,6 +42,7 @@ export type Message = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  testFailure: TestFailurePayload;
   update: UpdatePayload;
 };
 
@@ -74,6 +75,11 @@ export type Subscription = {
   event: Event;
 };
 
+export type TestFailurePayload = {
+  __typename?: 'TestFailurePayload';
+  ok: Scalars['Boolean'];
+};
+
 export type UpdateInput = {
   key: Scalars['String'];
   senderHandle: Scalars['String'];
@@ -90,7 +96,7 @@ export type ChatInputUpdateMutationVariables = Exact<{
 }>;
 
 
-export type ChatInputUpdateMutation = { __typename?: 'Mutation', update: { __typename?: 'UpdatePayload', ok: boolean } };
+export type ChatInputUpdateMutation = { __typename?: 'Mutation', payload: { __typename?: 'UpdatePayload', ok: boolean } };
 
 export type ChatMessagesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -105,7 +111,7 @@ export type ChatEventSubscription = { __typename?: 'Subscription', event: { __ty
 
 export const ChatInputUpdateDocument = gql`
     mutation ChatInputUpdate($input: UpdateInput!) {
-  update(input: $input) {
+  payload: update(input: $input) {
     ok
   }
 }

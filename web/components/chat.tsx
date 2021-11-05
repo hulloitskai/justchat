@@ -7,14 +7,13 @@ import { Badge } from "@chakra-ui/react";
 import { Text } from "@chakra-ui/react";
 import { Collapse, ScaleFade } from "@chakra-ui/react";
 import { useSafeLayoutEffect } from "@chakra-ui/react";
-import { useToast } from "components/toast";
 import { chakra } from "@chakra-ui/react";
 
 import { ChatInput, ChatInputHandle } from "components/chat-input";
 
 import { gql } from "@apollo/client";
 import { useApolloClient } from "@apollo/client";
-import { formatApolloError } from "components/apollo";
+import { useHandleQueryError } from "components/apollo";
 
 import { ChatEventDocument } from "apollo";
 import type { ChatEventSubscription } from "apollo";
@@ -52,7 +51,6 @@ export interface ChatProps extends BoxProps {
 
 export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
   const client = useApolloClient();
-  const toast = useToast();
 
   const handleRef = useRef<string | undefined | null>(handle);
   useEffect(() => {
@@ -77,15 +75,12 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
     }
   }, [handle]);
 
+  const handleChatMessagesQueryError = useHandleQueryError(
+    "Failed to load messages",
+  );
   const { data, fetchMore } = useChatMessagesQuery({
     ssr: false,
-    onError: error => {
-      toast({
-        status: "error",
-        title: "Failed to load messages",
-        description: formatApolloError(error),
-      });
-    },
+    onError: handleChatMessagesQueryError,
   });
 
   // Sort messages in ascending order by timestamp

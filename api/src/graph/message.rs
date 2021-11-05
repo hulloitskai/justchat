@@ -5,6 +5,7 @@ use super::*;
 
 use services::chatroom::Event as ChatroomEvent;
 use services::chatroom::Update as ChatroomUpdate;
+use services::chatroom::UpdateInfo as ChatroomUpdateInfo;
 
 #[derive(Debug, Clone, From)]
 pub(super) struct MessageObject {
@@ -179,12 +180,18 @@ impl MessageMutation {
             .sender_handle(sender_handle)
             .key(key)
             .build();
-        let current_message =
+        let update_info =
             chatroom.update(&ctx, update).await.into_field_result()?;
 
-        let payload = UpdatePayload {
-            ok: true,
-            current_message: current_message.map(Into::into),
+        let payload = {
+            let ChatroomUpdateInfo {
+                ok,
+                current_message,
+            } = update_info;
+            UpdatePayload {
+                ok,
+                current_message: current_message.map(Into::into),
+            }
         };
         Ok(payload)
     }
@@ -198,6 +205,6 @@ pub(super) struct UpdateInput {
 
 #[derive(Debug, Clone, SimpleObject)]
 pub(super) struct UpdatePayload {
-    pub current_message: Option<MessageObject>,
     pub ok: bool,
+    pub current_message: Option<MessageObject>,
 }

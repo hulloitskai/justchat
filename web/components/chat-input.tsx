@@ -13,11 +13,12 @@ import {
 } from "@chakra-ui/react";
 
 import { gql } from "@apollo/client";
+import { useHandleQueryError } from "components/apollo";
 import { useChatInputUpdateMutation } from "apollo";
 
 gql`
   mutation ChatInputUpdate($input: UpdateInput!) {
-    update(input: $input) {
+    payload: update(input: $input) {
       ok
     }
   }
@@ -65,8 +66,18 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       },
     }));
 
+    const handleChatUpdateMutationError = useHandleQueryError(
+      "Failed to load messages",
+    );
     const [runUpdateMutation, { loading: isLoading }] =
-      useChatInputUpdateMutation();
+      useChatInputUpdateMutation({
+        onCompleted: ({ payload }) => {
+          if (!payload.ok) {
+            console.warn("[ChatInput] Update failed (client is slow)");
+          }
+        },
+        onError: handleChatUpdateMutationError,
+      });
     return (
       <InputGroup {...otherProps}>
         <Input

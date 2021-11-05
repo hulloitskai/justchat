@@ -16,8 +16,9 @@ export type MessageFieldPolicy = {
 	senderHandle?: FieldPolicy<any> | FieldReadFunction<any>,
 	timestamp?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('update' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('testFailure' | 'update' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
+	testFailure?: FieldPolicy<any> | FieldReadFunction<any>,
 	update?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type QueryKeySpecifier = ('buildInfo' | 'currentMessage' | 'message' | 'messages' | QueryKeySpecifier)[];
@@ -30,6 +31,10 @@ export type QueryFieldPolicy = {
 export type SubscriptionKeySpecifier = ('event' | SubscriptionKeySpecifier)[];
 export type SubscriptionFieldPolicy = {
 	event?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type TestFailurePayloadKeySpecifier = ('ok' | TestFailurePayloadKeySpecifier)[];
+export type TestFailurePayloadFieldPolicy = {
+	ok?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type UpdatePayloadKeySpecifier = ('currentMessage' | 'ok' | UpdatePayloadKeySpecifier)[];
 export type UpdatePayloadFieldPolicy = {
@@ -60,6 +65,10 @@ export type StrictTypedTypePolicies = {
 	Subscription?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | SubscriptionKeySpecifier | (() => undefined | SubscriptionKeySpecifier),
 		fields?: SubscriptionFieldPolicy,
+	},
+	TestFailurePayload?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | TestFailurePayloadKeySpecifier | (() => undefined | TestFailurePayloadKeySpecifier),
+		fields?: TestFailurePayloadFieldPolicy,
 	},
 	UpdatePayload?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | UpdatePayloadKeySpecifier | (() => undefined | UpdatePayloadKeySpecifier),

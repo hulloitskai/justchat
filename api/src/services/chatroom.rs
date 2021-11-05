@@ -15,7 +15,7 @@ use entities::Message;
 #[derive(Debug)]
 pub struct Chatroom {
     current_message: AsyncMutex<Option<Record<Message>>>,
-    current_message_protection_duration: Duration,
+    current_message_protect_duration: Duration,
     sx: BroadcastSender<Event>,
     rx: BroadcastReceiver<Event>,
 }
@@ -25,7 +25,7 @@ impl Chatroom {
         let (sx, rx) = broadcast_channel(256);
         Chatroom {
             current_message: default(),
-            current_message_protection_duration: Duration::milliseconds(500),
+            current_message_protect_duration: Duration::milliseconds(500),
             sx,
             rx,
         }
@@ -47,7 +47,7 @@ impl Chatroom {
         &self,
         ctx: &Context,
         update: Update,
-    ) -> Result<Option<Record<Message>>> {
+    ) -> Result<UpdateInfo> {
         let Update { sender_handle, key } = update;
         let mut current_message = self.current_message.lock().await;
 
@@ -78,19 +78,25 @@ impl Chatroom {
                 let event = Event::Key(key);
                 self.sx.send(event).context("failed to broadcast event")?;
 
-                return Ok(current_message.clone());
+                let info = UpdateInfo {
+                    ok: true,
+                    current_message: current_message.clone(),
+                };
+                return Ok(info);
             } else {
                 // Retain current message
                 *current_message = Some(message.clone());
 
-                // Re-broadcast current message in the event of a race
-                // condition
-                let protected_until = message.created_at()
-                    + self.current_message_protection_duration;
-                if now() < protected_until {
-                    let event = Event::Message(message);
-                    self.sx.send(event).context("failed to broadcast event")?;
-                    return Ok(current_message.clone());
+                // Disallow updates from other senders if current message is
+                // protected.
+                let protect_duration = self.current_message_protect_duration;
+                let protect_until = message.created_at() + protect_duration;
+                if now() < protect_until {
+                    let info = UpdateInfo {
+                        ok: false,
+                        current_message: current_message.clone(),
+                    };
+                    return Ok(info);
                 }
             }
         }
@@ -123,7 +129,11 @@ impl Chatroom {
             }
             _ => bail!("invalid key"),
         };
-        Ok(current_message.clone())
+        let info = UpdateInfo {
+            ok: true,
+            current_message: current_message.clone(),
+        };
+        return Ok(info);
     }
 
     pub fn subscribe(&self) -> BroadcastReceiver<Event> {
@@ -141,4 +151,10 @@ pub enum Event {
 pub struct Update {
     pub sender_handle: Handle,
     pub key: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInfo {
+    pub ok: bool,
+    pub current_message: Option<Record<Message>>,
 }
