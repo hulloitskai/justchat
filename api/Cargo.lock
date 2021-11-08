@@ -203,9 +203,9 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "axum"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49c3f630b925c7a85089ff794fdce495c88c80d38710f31eb9817c8399fd77ce"
+checksum = "97dd56c26513a897c3a106ba73eff3a4be489d46cf0da20e40bd6f5c6f8c8941"
 dependencies = [
  "async-trait",
  "base64",
@@ -559,18 +559,18 @@ dependencies = [
 
 [[package]]
 name = "entrust"
-version = "0.2.1"
-source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.1#305fb65b36190273c4802116b8815ae942f4c8ac"
+version = "0.2.2"
+source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.2#9104d00d2170090df1b86f160be2f95ac4fa0283"
 dependencies = [
  "anyhow",
  "async-trait",
  "base64",
  "bson",
  "chrono",
- "derive_more",
  "entrust-macros",
  "futures-core",
  "futures-util",
+ "heck",
  "mongodb",
  "pin-project",
  "serde",
@@ -582,7 +582,7 @@ dependencies = [
 [[package]]
 name = "entrust-macros"
 version = "0.2.1"
-source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.1#305fb65b36190273c4802116b8815ae942f4c8ac"
+source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.2#9104d00d2170090df1b86f160be2f95ac4fa0283"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1014,7 +1014,7 @@ dependencies = [
 
 [[package]]
 name = "justchat-api"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "anyhow",
  "async-graphql",
@@ -1072,9 +1072,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.106"
+version = "0.2.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a60553f9a9e039a333b4e9b20573b9e9b9c0bb3a11e201ccc48ef4283456d673"
+checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
 
 [[package]]
 name = "linked-hash-map"
@@ -1120,9 +1120,9 @@ dependencies = [
 
 [[package]]
 name = "mailchecker"
-version = "4.0.13"
+version = "4.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ae68b057bc5965602b575e4b816dfaf69e702a4b932740ef6b4769308e12f07"
+checksum = "80d012c79f38febe303bfc81289a1d9a90d1844225a335568b6241317419368b"
 dependencies = [
  "fast_chemail",
 ]
@@ -1950,9 +1950,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.68"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f690853975602e1bfe1ccbf50504d67174e3bcf340f23b5ea9992e0587a52d8"
+checksum = "e466864e431129c7e0d3476b92f20458e5879919a0596c6472738d9fa2d342f8"
 dependencies = [
  "indexmap",
  "itoa",
