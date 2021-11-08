@@ -16,7 +16,7 @@ module.exports = {
     );
   },
 
-  async down(db, client) {
+  async down(db) {
     const message = db.collection("message");
     message.rename("Message");
 
