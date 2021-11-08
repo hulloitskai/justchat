@@ -66,9 +66,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
       },
     }));
 
-    const handleChatUpdateMutationError = useHandleQueryError(
-      "Failed to load messages",
-    );
+    const handleChatUpdateMutationError = useHandleQueryError("Update failed");
     const [runUpdateMutation, { loading: isLoading }] =
       useChatInputUpdateMutation({
         onCompleted: ({ payload }) => {
