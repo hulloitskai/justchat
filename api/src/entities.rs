@@ -18,6 +18,7 @@ pub use user::*;
 mod message;
 pub use message::*;
 
+use entrust::Record;
 use entrust::{AggregateOneQuery, AggregateQuery, MaybeAggregateOneQuery};
 use entrust::{Comparison, SortingDirection};
 use entrust::{EmptyConditions, EntityConditions};

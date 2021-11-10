@@ -9,12 +9,14 @@ export type EventFieldPolicy = {
 	key?: FieldPolicy<any> | FieldReadFunction<any>,
 	message?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MessageKeySpecifier = ('body' | 'id' | 'senderHandle' | 'timestamp' | MessageKeySpecifier)[];
+export type MessageKeySpecifier = ('body' | 'createdAt' | 'expiresAt' | 'id' | 'senderHandle' | 'updatedAt' | MessageKeySpecifier)[];
 export type MessageFieldPolicy = {
 	body?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	expiresAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	senderHandle?: FieldPolicy<any> | FieldReadFunction<any>,
-	timestamp?: FieldPolicy<any> | FieldReadFunction<any>
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type MutationKeySpecifier = ('testFailure' | 'update' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {

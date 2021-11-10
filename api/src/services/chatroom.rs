@@ -133,7 +133,7 @@ impl Chatroom {
             ok: true,
             current_message: current_message.clone(),
         };
-        return Ok(info);
+        Ok(info)
     }
 
     pub fn subscribe(&self) -> BroadcastReceiver<Event> {

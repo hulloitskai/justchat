@@ -363,7 +363,7 @@ async fn graphql_handler(
                     } = error;
                     let locations = {
                         let locations = locations
-                            .into_iter()
+                            .iter()
                             .map(ToString::to_string)
                             .collect::<Vec<_>>();
                         to_json_string(&locations).unwrap()

@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useMemo, useRef, useState } from "react";
-import { orderBy } from "lodash";
+import { isEmpty, orderBy } from "lodash";
 import { DateTime } from "luxon";
 
 import { BoxProps, VStack, HStack, Box, Center } from "@chakra-ui/react";
@@ -7,9 +7,9 @@ import { Badge } from "@chakra-ui/react";
 import { Text } from "@chakra-ui/react";
 import { Collapse, ScaleFade } from "@chakra-ui/react";
 import { useSafeLayoutEffect } from "@chakra-ui/react";
-import { chakra } from "@chakra-ui/react";
 
 import { ChatInput, ChatInputHandle } from "components/chat-input";
+import { ChatMessage } from "components/chat-message";
 
 import { gql } from "@apollo/client";
 import { useApolloClient } from "@apollo/client";
@@ -23,9 +23,10 @@ import type { ChatMessagesQuery } from "apollo";
 
 gql`
   query ChatMessages {
-    messages(take: 10) {
+    messages {
       id
-      timestamp
+      createdAt
+      expiresAt
       senderHandle
       body
     }
@@ -88,7 +89,7 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
     if (data?.messages) {
       return orderBy(
         data.messages,
-        ({ timestamp }) => DateTime.fromISO(timestamp),
+        ({ createdAt }) => DateTime.fromISO(createdAt),
         "asc",
       );
     }
@@ -199,11 +200,11 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
           overflowY="auto"
           p={3}
         >
-          {messages?.map(({ id, senderHandle, body }) => (
+          {messages?.map(({ id, expiresAt, senderHandle, body }) => (
             <ChatMessage
               key={id}
               isActive={senderHandle === handle}
-              {...{ senderHandle, body }}
+              {...{ expiresAt, senderHandle, body }}
             />
           ))}
           {currentMessage && (
@@ -211,8 +212,23 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
               senderHandle={currentMessage.senderHandle}
               body={currentMessage.body}
               isActive={currentMessage.senderHandle === handle}
-              showMarker
+              isCurrent
             />
+          )}
+          {isEmpty(messages) && !currentMessage && (
+            <Center flex={1}>
+              <Box
+                bg="gray.100"
+                color="gray.400"
+                fontSize="sm"
+                fontWeight="medium"
+                px={2}
+                py={1}
+                rounded="md"
+              >
+                <Text>No recent messages</Text>
+              </Box>
+            </Center>
           )}
           <Box ref={bottomRef} />
         </VStack>
@@ -233,39 +249,4 @@ export const Chat: FC<ChatProps> = ({ handle, ...otherProps }) => {
 type CurrentMessage = {
   senderHandle: string;
   body: string;
-};
-
-interface ChatMessageProps extends BoxProps {
-  senderHandle: string;
-  body: string;
-  isActive?: boolean;
-  showMarker?: boolean;
-}
-
-const ChatMessage: FC<ChatMessageProps> = ({
-  senderHandle,
-  body,
-  isActive,
-  showMarker,
-  ...otherProps
-}) => {
-  return (
-    <VStack align="stretch" spacing={1} rounded="2xl" {...otherProps}>
-      <Badge
-        alignSelf="start"
-        bg={isActive ? "pink.600" : "gray.600"}
-        color="white"
-      >
-        {senderHandle}
-      </Badge>
-      <Text color="gray.800" fontSize="sm" whiteSpace="pre-wrap">
-        {body || <>&nbsp;</>}
-        {showMarker && (
-          <chakra.span color="pink.500" fontWeight="semibold">
-            _
-          </chakra.span>
-        )}
-      </Text>
-    </VStack>
-  );
 };

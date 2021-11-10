@@ -35,9 +35,11 @@ export type Event = {
 export type Message = {
   __typename?: 'Message';
   body: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  expiresAt: Scalars['DateTime'];
   id: Scalars['ID'];
   senderHandle: Scalars['String'];
-  timestamp: Scalars['DateTime'];
+  updatedAt: Scalars['DateTime'];
 };
 
 export type Mutation = {
@@ -62,12 +64,6 @@ export type Query = {
 
 export type QueryMessageArgs = {
   id: Scalars['ID'];
-};
-
-
-export type QueryMessagesArgs = {
-  skip?: Maybe<Scalars['Int']>;
-  take?: Maybe<Scalars['Int']>;
 };
 
 export type Subscription = {
@@ -101,7 +97,7 @@ export type ChatInputUpdateMutation = { __typename?: 'Mutation', payload: { __ty
 export type ChatMessagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ChatMessagesQuery = { __typename?: 'Query', messages: Array<{ __typename?: 'Message', id: string, timestamp: string, senderHandle: string, body: string }> };
+export type ChatMessagesQuery = { __typename?: 'Query', messages: Array<{ __typename?: 'Message', id: string, createdAt: string, expiresAt: string, senderHandle: string, body: string }> };
 
 export type ChatEventSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
@@ -144,9 +140,10 @@ export type ChatInputUpdateMutationResult = Apollo.MutationResult<ChatInputUpdat
 export type ChatInputUpdateMutationOptions = Apollo.BaseMutationOptions<ChatInputUpdateMutation, ChatInputUpdateMutationVariables>;
 export const ChatMessagesDocument = gql`
     query ChatMessages {
-  messages(take: 10) {
+  messages {
     id
-    timestamp
+    createdAt
+    expiresAt
     senderHandle
     body
   }

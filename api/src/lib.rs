@@ -35,6 +35,7 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration as StdDuration;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::from_str as from_json_str;
@@ -53,9 +54,9 @@ use anyhow::{Error, Result};
 
 use tracing::{debug, trace};
 
-use chrono::DateTime as GenericDateTime;
+use chrono::Duration;
 use chrono::NaiveDate as Date;
 use chrono::NaiveTime as Time;
-use chrono::{Duration, FixedOffset, TimeZone, Utc};
+use chrono::{FixedOffset, TimeZone, Utc};
 
-type DateTime<Tz = Utc> = GenericDateTime<Tz>;
+type DateTime<Tz = Utc> = chrono::DateTime<Tz>;

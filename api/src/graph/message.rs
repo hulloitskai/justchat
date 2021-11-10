@@ -18,12 +18,20 @@ impl MessageObject {
         self.record.id().into()
     }
 
-    async fn timestamp(&self) -> DateTimeScalar {
+    async fn created_at(&self) -> DateTimeScalar {
         self.record.created_at().into()
     }
 
+    async fn updated_at(&self) -> DateTimeScalar {
+        self.record.updated_at().into()
+    }
+
+    async fn expires_at(&self) -> DateTimeScalar {
+        Message::expires_at(&self.record).into()
+    }
+
     async fn sender_handle(&self) -> &str {
-        &self.record.sender_handle.as_str()
+        self.record.sender_handle.as_str()
     }
 
     async fn body(&self) -> &str {
@@ -89,29 +97,18 @@ impl MessageQuery {
     async fn messages(
         &self,
         ctx: &Context<'_>,
-        skip: Option<u32>,
-        take: Option<u32>,
     ) -> FieldResult<Vec<MessageObject>> {
-        const TAKE_MAX: u32 = 25;
-
-        let skip = skip.unwrap_or_default();
-        let take = take.unwrap_or(TAKE_MAX);
-        if take > TAKE_MAX {
-            let error = FieldError::new("must take 25 or fewer messages");
-            return Err(error);
-        }
-
         let services = ctx.services();
         let ctx = EntityContext::new(services);
 
-        let messages = Message::all()
-            .sort(MessageSorting::Timestamp(SortingDirection::Desc))
-            .take(take)
-            .skip(skip)
-            .load(&ctx)
-            .await
-            .context("failed to find messages")
-            .into_field_result()?;
+        let messages = Message::find({
+            MessageConditions::builder().is_expired(false).build()
+        })
+        .sort(MessageSorting::CreatedAt(SortingDirection::Desc))
+        .load(&ctx)
+        .await
+        .context("failed to find messages")
+        .into_field_result()?;
         let messages = messages
             .try_collect::<Vec<_>>()
             .await
