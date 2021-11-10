@@ -14,6 +14,7 @@ use derivative::Derivative;
 use lazy_static::lazy_static;
 use regex::Regex;
 use request::Client as HttpClient;
+use tracing::{debug, trace};
 use typed_builder::TypedBuilder as Builder;
 use url::Url;
 
@@ -51,8 +52,6 @@ use futures_util::stream::{StreamExt, TryStreamExt};
 use anyhow::Context as AnyhowContext;
 use anyhow::{bail, ensure};
 use anyhow::{Error, Result};
-
-use tracing::{debug, trace};
 
 use chrono::Duration;
 use chrono::NaiveDate as Date;

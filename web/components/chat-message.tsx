@@ -73,7 +73,7 @@ export const ChatMessage: FC<ChatMessageProps> = ({
             {senderHandle}
           </Badge>
           {secondsRemaining !== undefined && (
-            <Badge fontWeight="medium" textTransform="unset" color="gray.500">
+            <Badge fontWeight="medium" textTransform="unset" color="gray.400">
               <HStack spacing={1}>
                 <Icon as={HiClock} />
                 <Text>
