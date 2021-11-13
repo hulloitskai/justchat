@@ -62,7 +62,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(
           inputEl.value = "";
         }
         setIsDisabled(true);
-        setTimeout(() => setIsDisabled(false), 1000);
+        setTimeout(() => setIsDisabled(false), 750);
       },
     }));
 

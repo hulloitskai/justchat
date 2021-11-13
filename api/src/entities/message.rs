@@ -1,7 +1,9 @@
 use super::*;
 
+pub type MessageId = EntityId<Message>;
+
 lazy_static! {
-    static ref MESSAGE_EXPIRES_IN: Duration = Duration::seconds(10);
+    static ref MESSAGE_EXPIRES_IN: Duration = Duration::seconds(12);
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Object)]
@@ -68,5 +70,3 @@ impl EntitySorting for MessageSorting {
         }
     }
 }
-
-pub type MessageId = EntityId<Message>;

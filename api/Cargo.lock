@@ -559,8 +559,8 @@ dependencies = [
 
 [[package]]
 name = "entrust"
-version = "0.2.3"
-source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.3#6fd89d8b700d71aa4546ef6a8a88c3f26c0b60bf"
+version = "0.2.4"
+source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.4#4bcb1f48f255975b6cab8cfe52cc4155fadcb9e1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -581,8 +581,8 @@ dependencies = [
 
 [[package]]
 name = "entrust-macros"
-version = "0.2.1"
-source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.3#6fd89d8b700d71aa4546ef6a8a88c3f26c0b60bf"
+version = "0.2.4"
+source = "git+https://github.com/hulloitskai/entrust?tag=v0.2.4#4bcb1f48f255975b6cab8cfe52cc4155fadcb9e1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1014,7 +1014,7 @@ dependencies = [
 
 [[package]]
 name = "justchat-api"
-version = "0.1.28"
+version = "0.1.29"
 dependencies = [
  "anyhow",
  "async-graphql",

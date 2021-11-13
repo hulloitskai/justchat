@@ -81,15 +81,18 @@ impl MessageQuery {
         ctx: &Context<'_>,
         id: Id<Message>,
     ) -> FieldResult<Option<MessageObject>> {
+        let message_id = MessageId::from(id);
+
         let services = ctx.services();
         let ctx = EntityContext::new(services);
 
-        let message = Message::get(id.into())
+        let message = Message::get(message_id)
             .optional()
             .load(&ctx)
             .await
             .context("failed to load message")
             .into_field_result()?;
+
         let message = message.map(MessageObject::from);
         Ok(message)
     }
@@ -113,6 +116,7 @@ impl MessageQuery {
             .try_collect::<Vec<_>>()
             .await
             .context("failed to load messages")?;
+
         let messages = messages
             .into_iter()
             .map(MessageObject::from)
